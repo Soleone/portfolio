@@ -4,13 +4,12 @@ export const profile = {
   tagline: "I build accessible, performant web experiences for the modern web.",
   intro:
     "I'm a freelance developer who partners with founders and teams to ship polished products. My favorite work lives at the intersection of thoughtful design and robust engineering — interfaces that look great and are built to last.",
-  location: "Remote · Lisbon, PT",
-  email: "hello@alexrivera.dev",
+  location: "Ottawa, Canada",
+  email: "dev@soleone.xyz",
   socials: [
-    { label: "GitHub", href: "https://github.com" },
-    { label: "LinkedIn", href: "https://linkedin.com" },
-    { label: "X / Twitter", href: "https://x.com" },
-    { label: "Read.cv", href: "https://read.cv" },
+    { label: "GitHub", href: "https://github.com/Soleone" },
+    { label: "LinkedIn", href: "https://www.linkedin.com/in/dennis-theisen-8a88a57/" },
+    { label: "X / Twitter", href: "https://x.com/soleone" },
   ],
 }
 
@@ -54,32 +53,25 @@ export const projects: Project[] = [
 ]
 
 export const skillGroups: { label: string; items: string[] }[] = [
-  { label: "Languages", items: ["TypeScript", "JavaScript", "Python", "SQL"] },
-  { label: "Frameworks", items: ["React", "Next.js", "Node.js", "Express"] },
+  { label: "Languages", items: ["Ruby", "TypeScript", "JavaScript", "Java", "C++", "SQL"] },
+  { label: "Frameworks", items: ["Rails", "React", "Next.js", "Vue", "Remix", "Node.js", "Three.js", "Unreal Engine"] },
   { label: "Styling", items: ["Tailwind CSS", "CSS", "Framer Motion", "shadcn/ui"] },
-  { label: "Tooling", items: ["Git", "Vercel", "Docker", "Playwright"] },
+  { label: "Tooling", items: ["Git", "Unix", "Vercel", "Docker", "Playwright"] },
+  { label: "AI", items: ["Pi agent", "Claude", "Cursor"] },
 ]
 
 export const experience: { period: string; role: string; company: string; description: string }[] = [
   {
-    period: "2022 — Present",
-    role: "Freelance Web Developer",
-    company: "Independent",
+    period: "2008 — Present",
+    role: "Software Engineer",
+    company: "Shopify",
     description:
-      "Partnering with startups and agencies to design and build production web apps from the ground up.",
+      "Worked across a broad range of Shopify areas, including Payments, Admin, Apps, technical support, internal tools, the home screen, core architecture, blockchain, Shop app authentication, and the communications platform.",
   },
   {
-    period: "2020 — 2022",
-    role: "Frontend Engineer",
-    company: "Northwind Labs",
-    description:
-      "Led the rebuild of the core product UI, improving Lighthouse scores and shipping a new design system.",
-  },
-  {
-    period: "2018 — 2020",
-    role: "Junior Developer",
-    company: "Bright Pixel",
-    description:
-      "Built client marketing sites and internal tools across a range of industries and stacks.",
+    period: "2008",
+    role: "Computer Science",
+    company: "University of Koblenz-Landau",
+    description: "Studied computer science before eventually dropping out and relocating to Canada.",
   },
 ]
