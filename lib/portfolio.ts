@@ -3,7 +3,7 @@ export const profile = {
   role: "Full-Stack Web Developer",
   tagline: "I build accessible, performant web experiences for the modern web.",
   intro:
-    "I'm a freelance developer who partners with founders and teams to ship polished products. My favorite work lives at the intersection of thoughtful design and robust engineering — interfaces that look great and are built to last.",
+    "I'm a freelance developer who partners with founders and teams to ship polished products. My favorite work lives at the intersection of thoughtful design and robust engineering: interfaces that look great and are built to last.",
   location: "Ottawa, Canada",
   email: "dev@soleone.xyz",
   socials: [
@@ -62,7 +62,7 @@ export const skillGroups: { label: string; items: string[] }[] = [
 
 export const experience: { period: string; role: string; company: string; description: string }[] = [
   {
-    period: "2008 — Present",
+    period: "2008 - Present",
     role: "Software Engineer",
     company: "Shopify",
     description:

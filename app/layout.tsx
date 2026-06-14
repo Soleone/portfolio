@@ -9,7 +9,7 @@ const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://soleone.xyz"),
-  title: "Dennis Theisen — Full-Stack Web Developer",
+  title: "Dennis Theisen - Full-Stack Web Developer",
   description:
     "Freelance full-stack web developer building accessible, performant web experiences. View selected projects, skills, and get in touch.",
   alternates: {
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   openGraph: {
     url: "https://soleone.xyz",
     siteName: "Dennis Theisen Portfolio",
-    title: "Dennis Theisen — Full-Stack Web Developer",
+    title: "Dennis Theisen - Full-Stack Web Developer",
     description:
       "Freelance full-stack web developer building accessible, performant web experiences. View selected projects, skills, and get in touch.",
     type: "website",
