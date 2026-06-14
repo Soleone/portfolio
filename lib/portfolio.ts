@@ -1,5 +1,5 @@
 export const profile = {
-  name: "Alex Rivera",
+  name: "Dennis Theisen",
   role: "Full-Stack Web Developer",
   tagline: "I build accessible, performant web experiences for the modern web.",
   intro:

@@ -8,7 +8,7 @@ const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 
 export const metadata: Metadata = {
-  title: "Alex Rivera — Full-Stack Web Developer",
+  title: "Dennis Theisen — Full-Stack Web Developer",
   description:
     "Freelance full-stack web developer building accessible, performant web experiences. View selected projects, skills, and get in touch.",
 };
