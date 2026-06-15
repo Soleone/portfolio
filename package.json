@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "next build",
+    "deploy": "pnpm dlx vercel --prod --yes",
     "dev": "next dev --turbopack",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "lint": "eslint",
