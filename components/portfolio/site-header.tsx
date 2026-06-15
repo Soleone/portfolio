@@ -36,7 +36,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden md:block">
-          <Button size="sm" render={<a href="#contact">Get in touch</a>} />
+          <Button nativeButton={false} size="sm" render={<a href="#contact">Get in touch</a>} />
         </div>
 
         <Sheet open={open} onOpenChange={setOpen}>

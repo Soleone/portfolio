@@ -13,42 +13,184 @@ export const profile = {
   ],
 }
 
+export type ProjectPriority = "high" | "mid" | "low"
+
 export type Project = {
   title: string
   description: string
   year: string
-  image: string
-  tags: string[]
+  priority: ProjectPriority
+  type: string
+  tech: string[]
   href: string
+  icon?: string
+}
+
+export const priorityRank: Record<ProjectPriority, number> = {
+  high: 0,
+  mid: 1,
+  low: 2,
 }
 
 export const projects: Project[] = [
   {
-    title: "Pulse Analytics",
+    title: "Pi Tasks",
     description:
-      "A real-time analytics dashboard for SaaS teams, featuring live charts, custom reports, and role-based access.",
-    year: "2024",
-    image: "/projects/analytics-dashboard.png",
-    tags: ["Next.js", "TypeScript", "PostgreSQL", "Tailwind"],
-    href: "#",
+      "A pi coding-agent extension for managing task state through swappable backends, designed for agent-native project work.",
+    year: "2026",
+    priority: "high",
+    type: "AI tooling",
+    tech: ["TypeScript", "Pi", "TUI"],
+    href: "https://github.com/Soleone/pi-tasks",
   },
   {
-    title: "Atelier Store",
+    title: "GigQuest",
     description:
-      "A headless e-commerce storefront with a custom CMS, instant search, and a checkout that converts.",
-    year: "2024",
-    image: "/projects/ecommerce-store.png",
-    tags: ["React", "Shopify", "GraphQL", "Stripe"],
-    href: "#",
+      "A story-based programming game about learning software development through quests, practice, and progression.",
+    year: "2026",
+    priority: "high",
+    type: "Game",
+    tech: ["Next.js", "React", "Monaco"],
+    href: "https://github.com/Soleone/gigquest",
+    icon: "/projects/icons/gigquest.png",
   },
   {
-    title: "Vault Banking",
+    title: "Topdeck",
     description:
-      "A mobile-first banking experience with secure auth, transaction insights, and a delightful onboarding flow.",
+      "A polished public website for the Topdeck podcast, built around a clean publishing and listening experience.",
     year: "2023",
-    image: "/projects/mobile-banking.png",
-    tags: ["React Native", "Node.js", "Plaid", "Expo"],
-    href: "#",
+    priority: "high",
+    type: "Website",
+    tech: ["Remix", "Prisma", "Tailwind"],
+    href: "https://github.com/Soleone/topdeck",
+    icon: "/projects/icons/topdeck.png",
+  },
+  {
+    title: "Pixelpics",
+    description:
+      "A JavaScript puzzle game that stored its levels as NFTs on the blockchain.",
+    year: "2018",
+    priority: "high",
+    type: "Puzzle game",
+    tech: ["Vue", "Blockchain"],
+    href: "https://github.com/Soleone/pixelpics",
+    icon: "/projects/icons/pixelpics.png",
+  },
+  {
+    title: "SoulsLike",
+    description: "An Unreal Engine 5.3 Souls-like game project that highlights C++ and real-time game development breadth.",
+    year: "2024",
+    priority: "high",
+    type: "Game",
+    tech: ["Unreal Engine", "C++", "C#"],
+    href: "https://github.com/Soleone/SoulsLike",
+  },
+  {
+    title: "YouTube Playlist Downloader",
+    description: "A CLI utility that downloads every video from a playlist as MP3s into a folder named after the playlist.",
+    year: "2026",
+    priority: "high",
+    type: "CLI utility",
+    tech: ["Shell", "yt-dlp", "ffmpeg"],
+    href: "https://github.com/Soleone/youtube-playlist-downloader",
+  },
+  {
+    title: "Agent Memory",
+    description:
+      "Global and project-scoped memory for coding agents, inspired by durable context systems like OneContext.",
+    year: "2026",
+    priority: "high",
+    type: "AI tooling",
+    tech: ["JavaScript", "CLI", "Node.js"],
+    href: "https://github.com/Soleone/agent-memory",
+  },
+  {
+    title: "Agent Coach",
+    description: "A skill-based plugin that turns an agent into a proactive coach for better workflows and decisions.",
+    year: "2026",
+    priority: "high",
+    type: "AI tooling",
+    tech: ["JavaScript", "Shell", "Obsidian"],
+    href: "https://github.com/Soleone/agent-coach",
+  },
+  {
+    title: "Pi Multiplayer",
+    description:
+      "Multiplayer coordination for coding agents, with an agnostic server and runner for experiments beyond a single-agent workflow.",
+    year: "2026",
+    priority: "mid",
+    type: "AI tooling",
+    tech: ["TypeScript", "WebSocket", "Vitest"],
+    href: "https://github.com/Soleone/pi-mp",
+  },
+  {
+    title: "Gunchained",
+    description:
+      "A Vue app for managing player sessions around the blockchain card game Gods Unchained.",
+    year: "2021",
+    priority: "mid",
+    type: "Game companion",
+    tech: ["Vue", "Vuetify", "Firebase"],
+    href: "https://github.com/Soleone/gunchained",
+    icon: "/projects/icons/gunchained.png",
+  },
+  {
+    title: "Better YouTube",
+    description:
+      "A browser/script experiment for improving the YouTube experience, marked for a future README and deeper polish pass.",
+    year: "2026",
+    priority: "mid",
+    type: "Browser script",
+    tech: ["JavaScript", "CSS", "Chrome extension"],
+    href: "https://github.com/Soleone/better-youtube",
+  },
+  {
+    title: "GameFAQs",
+    description:
+      "A Ruby gem for accessing GameFAQs data, representing older open-source library work in gaming communities.",
+    year: "2008",
+    priority: "low",
+    type: "Library",
+    tech: ["Ruby", "Gem", "API"],
+    href: "https://github.com/Soleone/gamefaqs",
+  },
+  {
+    title: "SC2Ranks",
+    description:
+      "A Ruby API wrapper for StarCraft II rankings data, built during an earlier era of public gaming APIs.",
+    year: "2010",
+    priority: "low",
+    type: "Library",
+    tech: ["Ruby", "API", "Gaming"],
+    href: "https://github.com/Soleone/sc2ranks",
+  },
+  {
+    title: "Pi Extensions",
+    description: "Personal pi agent extensions that can be grouped under the broader Pi ecosystem work.",
+    year: "2026",
+    priority: "low",
+    type: "AI tooling",
+    tech: ["TypeScript", "Pi", "Extensions"],
+    href: "https://github.com/Soleone/pi-ext",
+  },
+  {
+    title: "Agentic Workflow",
+    description: "A text protocol for LLM-based agentic workflows to build products with clearer handoffs and structure.",
+    year: "2025",
+    priority: "low",
+    type: "Protocol",
+    tech: ["Markdown", "LLM", "Workflow"],
+    href: "https://github.com/Soleone/agentic-workflow",
+  },
+  {
+    title: "Phony",
+    description: "A small Twilio app for sending and listing SMS messages.",
+    year: "2012",
+    priority: "low",
+    type: "Web app",
+    tech: ["Rails", "Twilio", "CoffeeScript"],
+    href: "https://github.com/Soleone/phony",
+    icon: "/projects/icons/phony.ico",
   },
 ]
 

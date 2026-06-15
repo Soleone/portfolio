@@ -20,8 +20,8 @@ export function Hero() {
       </p>
 
       <div className="mt-8 flex flex-wrap items-center gap-4">
-        <Button size="lg" render={<a href="#work">View my work</a>} />
-        <Button variant="outline" size="lg" render={<a href="#contact">Get in touch</a>} />
+        <Button nativeButton={false} size="lg" render={<a href="#work">View my work</a>} />
+        <Button nativeButton={false} variant="outline" size="lg" render={<a href="#contact">Get in touch</a>} />
         <span className="flex items-center gap-2 text-sm text-muted-foreground">
           <MapPin className="size-4" />
           {profile.location}
