@@ -31,6 +31,14 @@ const feed = feedJson as ShowcaseFeed
 const mediaUrl = (src?: string) => (!src ? undefined : /^https?:\/\//.test(src) ? src : `/showcase/${src}`)
 const repoKey = (url?: string) => url?.toLowerCase().replace(/\.git$/, "").replace(/\/$/, "")
 
+export type ProjectMedia = { hero?: string; motion?: string; video?: string }
+
+// All resolved media for a repo, for cards that pick their own still/loop/video.
+export function feedMedia(repo: string, { projects: entries }: ShowcaseFeed = feed): ProjectMedia {
+  const media = entries.find((entry) => repoKey(entry.repo) === repoKey(repo))?.media
+  return { hero: mediaUrl(media?.hero), motion: mediaUrl(media?.motion), video: mediaUrl(media?.video) }
+}
+
 export function feedToProject(entry: FeedProject): Project {
   return {
     title: entry.title,
