@@ -9,7 +9,7 @@
       "kind": "cli",
       "year": 2026,
       "repo": "https://github.com/Soleone/logdig",
-      "live": "https://logdig-demo.vercel.app",
+      "live": "https://logdig.soleone.xyz",
       "demo": {
         "strategy": "browser-terminal",
         "local": "npm run demo",
@@ -74,6 +74,7 @@
       "kind": "desktop-app",
       "year": 2026,
       "repo": "https://github.com/Soleone/vibestep",
+      "live": "https://vibestep.vercel.app",
       "media": {
         "hero": "https://github.com/user-attachments/assets/ebad07ec-73cf-47b3-bf62-45b395d33a4a"
       },
