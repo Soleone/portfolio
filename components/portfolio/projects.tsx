@@ -46,6 +46,7 @@ const projectIcons: Record<string, LucideIcon> = {
   "Pi Multiplayer": Bot,
   Gunchained: Gem,
   "Better YouTube": CirclePlay,
+  Vibestep: Gamepad2,
   GameFAQs: ScrollText,
   SC2Ranks: Gem,
   "Pi Extensions": Wrench,

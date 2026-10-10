@@ -47,6 +47,17 @@ export const projects: Project[] = [
     href: "https://github.com/Soleone/logdig",
   },
   {
+    title: "Vibestep",
+    description:
+      "A beatmap studio with a rhythm-game playtest mode. Align a song's beat grid, record or edit lane notes, then play the map right away, in the browser.",
+    year: "2026",
+    priority: "high",
+    type: "Game",
+    tech: ["React", "TypeScript", "Web Audio", "Electron"],
+    href: "https://github.com/Soleone/vibestep",
+    live: "https://vibestep.soleone.xyz",
+  },
+  {
     title: "Pi Tasks",
     description:
       "A pi coding-agent extension for managing task state through swappable backends, designed for agent-native project work.",
