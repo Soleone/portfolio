@@ -69,13 +69,13 @@ export function Projects() {
             <Card
               key={project.title}
               className={`group relative overflow-hidden bg-card/80 p-0 shadow-sm transition-all duration-300 [transform-style:preserve-3d] hover:-translate-y-1 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/10 ${
-                isHero ? "lg:row-span-2" : ""
+                isHero ? "lg:col-span-2" : ""
               }`}
             >
-              <div className="block h-full">
+              <div className={`block h-full ${isHero ? "lg:grid lg:grid-cols-[1.1fr_0.9fr]" : ""}`}>
                 <div
                   className={`relative min-h-44 overflow-hidden border-b border-border bg-gradient-to-br ${theme} ${
-                    isHero ? "lg:min-h-80" : ""
+                    isHero ? "aspect-[8/5] lg:border-b-0 lg:border-r" : ""
                   }`}
                 >
                   {project.image ? (
@@ -116,7 +116,7 @@ export function Projects() {
                   </div>
                 </div>
 
-                <CardContent className={isHero ? "p-6 md:p-8" : "p-5"}>
+                <CardContent className={isHero ? "p-6 md:p-8 lg:self-center" : "p-5"}>
                   <div className="flex items-start justify-between gap-4">
                     <h3 className="text-xl font-semibold tracking-tight">
                       {/* The title link covers the whole card; the Try it link sits above it. */}
