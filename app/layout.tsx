@@ -32,6 +32,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={cn("font-sans", inter.variable)}>
+      <head>
+        {/* The site ships its own dark theme. This keeps Dark Reader from restyling it, which would
+            also rewrite inline styles before hydration and break it. */}
+        <meta name="darkreader-lock" />
+      </head>
       <body
         className="antialiased"
       >
