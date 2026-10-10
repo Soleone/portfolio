@@ -24,9 +24,6 @@ const orderedProjects = withShowcase(projects).sort((a, b) => {
   return Number(b.year) - Number(a.year)
 })
 
-// Card tints, in order; neighbours never share a hue.
-const hues = [160, 285, 235, 55, 20, 330, 200, 120]
-
 const projectIcons: Record<string, LucideIcon> = {
   "Pi Tasks": Wrench,
   GigQuest: Gamepad2,
@@ -63,7 +60,8 @@ export function toCardProject(project: Project, index: number): CardProject {
     media: media.hero || media.motion || media.video ? media : { hero: project.image },
     icon: project.icon,
     glyph: <Icon strokeWidth={1.75} />,
-    hue: hues[index % hues.length],
+    // The theme decides what color each of the eight tints is.
+    tint: (index % 8) + 1,
   }
 }
 

@@ -7,7 +7,7 @@ export function Hero() {
   return (
     <section id="top" className="mx-auto max-w-5xl px-6 pb-16 pt-20 md:pt-28">
       <Badge variant="secondary" className="mb-6 gap-2">
-        <span className="inline-block size-2 rounded-full bg-green-500" aria-hidden />
+        <span className="inline-block size-2 rounded-full bg-success" aria-hidden />
         Available for small projects
       </Badge>
 

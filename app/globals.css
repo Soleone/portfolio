@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "./showcase-theme.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -26,6 +27,7 @@
 --color-accent-foreground: var(--accent-foreground);
 --color-destructive: var(--destructive);
 --color-destructive-foreground: var(--destructive-foreground);
+--color-success: var(--success);
 --color-border: var(--border);
 --color-input: var(--input);
 --color-ring: var(--ring);
@@ -51,73 +53,75 @@
 --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Themes. Each palette theme (lib/themes) sets the --om-* slots below on <html data-theme>,
+ * from CSS generated in the root layout. Components only ever see the region tokens after
+ * that, so a theme never has to know they exist. The showcase theme skips the slots and
+ * writes the region tokens itself (showcase-theme.css), which wins on specificity.
+ *
+ * Two names collide with omarchy and are mapped deliberately: its `accent` is the brand color,
+ * so it becomes our primary and focus ring, while shadcn's `--accent` is a quiet hover surface
+ * and takes its `selection`. Its `muted` is a de-emphasized ink, so it becomes dividers and
+ * input edges. `orange` and `brown` are optional in a palette, so they borrow a neighbour.
+ */
 :root {
---card: oklch(1 0 0);
---card-foreground: oklch(0.141 0.005 285.823);
---popover: oklch(1 0 0);
---popover-foreground: oklch(0.141 0.005 285.823);
---primary: oklch(0.525 0.223 3.958);
---primary-foreground: oklch(0.971 0.014 343.198);
---secondary: oklch(0.967 0.001 286.375);
---secondary-foreground: oklch(0.21 0.006 285.885);
---muted: oklch(0.967 0.001 286.375);
---muted-foreground: oklch(0.552 0.016 285.938);
---accent: oklch(0.967 0.001 286.375);
---accent-foreground: oklch(0.21 0.006 285.885);
---destructive: oklch(0.577 0.245 27.325);
---border: oklch(0.92 0.004 286.32);
---input: oklch(0.92 0.004 286.32);
---ring: oklch(0.705 0.015 286.067);
---chart-1: oklch(0.905 0.182 98.111);
---chart-2: oklch(0.795 0.184 86.047);
---chart-3: oklch(0.681 0.162 75.834);
---chart-4: oklch(0.554 0.135 66.442);
---chart-5: oklch(0.476 0.114 61.907);
---radius: 0.625rem;
---sidebar: oklch(0.985 0 0);
---sidebar-foreground: oklch(0.141 0.005 285.823);
---sidebar-primary: oklch(0.592 0.249 0.584);
---sidebar-primary-foreground: oklch(0.971 0.014 343.198);
---sidebar-accent: oklch(0.967 0.001 286.375);
---sidebar-accent-foreground: oklch(0.21 0.006 285.885);
---sidebar-border: oklch(0.92 0.004 286.32);
---sidebar-ring: oklch(0.705 0.015 286.067);
---background: oklch(1 0 0);
---foreground: oklch(0.141 0.005 285.823);
+  --om-orange: var(--om-yellow);
+  --om-brown: var(--om-red);
+  color-scheme: light;
 }
 
-.dark {
-  --background: oklch(0.141 0.005 285.823);
---foreground: oklch(0.985 0 0);
---card: oklch(0.21 0.006 285.885);
---card-foreground: oklch(0.985 0 0);
---popover: oklch(0.21 0.006 285.885);
---popover-foreground: oklch(0.985 0 0);
---primary: oklch(0.459 0.187 3.815);
---primary-foreground: oklch(0.971 0.014 343.198);
---secondary: oklch(0.274 0.006 286.033);
---secondary-foreground: oklch(0.985 0 0);
---muted: oklch(0.274 0.006 286.033);
---muted-foreground: oklch(0.705 0.015 286.067);
---accent: oklch(0.274 0.006 286.033);
---accent-foreground: oklch(0.985 0 0);
---destructive: oklch(0.704 0.191 22.216);
---border: oklch(1 0 0 / 10%);
---input: oklch(1 0 0 / 15%);
---ring: oklch(0.552 0.016 285.938);
---chart-1: oklch(0.905 0.182 98.111);
---chart-2: oklch(0.795 0.184 86.047);
---chart-3: oklch(0.681 0.162 75.834);
---chart-4: oklch(0.554 0.135 66.442);
---chart-5: oklch(0.476 0.114 61.907);
---sidebar: oklch(0.21 0.006 285.885);
---sidebar-foreground: oklch(0.985 0 0);
---sidebar-primary: oklch(0.656 0.241 354.308);
---sidebar-primary-foreground: oklch(0.971 0.014 343.198);
---sidebar-accent: oklch(0.274 0.006 286.033);
---sidebar-accent-foreground: oklch(0.985 0 0);
---sidebar-border: oklch(1 0 0 / 10%);
---sidebar-ring: oklch(0.552 0.016 285.938);
+:root.dark {
+  color-scheme: dark;
+  /* A palette's `muted` is an ink, which on a dark canvas is too loud for hairlines. */
+  --border: color-mix(in oklab, var(--om-muted) 55%, transparent);
+}
+
+:root {
+  --background: var(--om-dark-background);
+  --foreground: var(--om-foreground);
+  --card: var(--om-background);
+  --card-foreground: var(--om-foreground);
+  --popover: var(--om-background);
+  --popover-foreground: var(--om-foreground);
+  --primary: var(--om-accent);
+  --primary-foreground: var(--om-on-accent);
+  --secondary: var(--om-lighter-background);
+  --secondary-foreground: var(--om-bright-foreground);
+  --muted: var(--om-lighter-background);
+  --muted-foreground: var(--om-muted-foreground);
+  --accent: var(--om-selection);
+  --accent-foreground: var(--om-bright-foreground);
+  --destructive: var(--om-red);
+  --destructive-foreground: var(--om-on-red);
+  --success: var(--om-green);
+  --border: var(--om-muted);
+  --input: var(--om-muted);
+  --ring: var(--om-accent);
+  --chart-1: var(--om-cyan);
+  --chart-2: var(--om-green);
+  --chart-3: var(--om-yellow);
+  --chart-4: var(--om-magenta);
+  --chart-5: var(--om-blue);
+  --sidebar: var(--om-background);
+  --sidebar-foreground: var(--om-foreground);
+  --sidebar-primary: var(--om-accent);
+  --sidebar-primary-foreground: var(--om-on-accent);
+  --sidebar-accent: var(--om-selection);
+  --sidebar-accent-foreground: var(--om-bright-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--om-accent);
+  --selection: var(--om-selection);
+  --selection-foreground: var(--om-bright-foreground);
+  /* The project cards take eight tints, one per hue slot (an accent is nearly always one of them already). */
+  --tint-1: var(--om-green);
+  --tint-2: var(--om-magenta);
+  --tint-3: var(--om-blue);
+  --tint-4: var(--om-yellow);
+  --tint-5: var(--om-red);
+  --tint-6: var(--om-brown);
+  --tint-7: var(--om-cyan);
+  --tint-8: var(--om-orange);
+  --radius: 0.625rem;
 }
 
 @layer base {
@@ -130,4 +134,8 @@ body {
   html {
     @apply font-sans;
 }
+  ::selection {
+    background: var(--selection, Highlight);
+    color: var(--selection-foreground, HighlightText);
+  }
 }

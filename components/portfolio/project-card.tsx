@@ -24,7 +24,7 @@ export type CardProject = {
   media: ProjectMedia
   icon?: string
   glyph: ReactNode // a rendered icon, so server components can pass it
-  hue: number
+  tint: number // 1..8, which --tint-* token colors this card
 }
 
 const spring = (stiffness: number, damping: number) => ({ type: "spring" as const, stiffness, damping })
@@ -146,14 +146,15 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
   const dealDelay = (index % 3) * t.dealStagger
   const showingBack = turns % 2 === 1
   const surface: CSSProperties = {
-    // Tinted from the theme's card color so light and dark both get the project hue.
-    background: `linear-gradient(160deg, color-mix(in oklch, var(--card) 86%, oklch(0.75 0.12 ${project.hue})) 0%, var(--card) 55%, color-mix(in oklch, var(--card) 80%, oklch(0.6 0.12 ${project.hue})) 100%)`,
+    // Tinted from the theme's card color, so every theme gets its own take on the project tint.
+    background: `linear-gradient(160deg, color-mix(in oklch, var(--card) 86%, var(--tint)) 0%, var(--card) 55%, color-mix(in oklch, var(--card) 80%, color-mix(in oklch, var(--tint), black 20%)) 100%)`,
   }
   const layer = (share: number): CSSProperties => ({ transform: `translateZ(${t.depth * share}px)` })
 
   return (
     <motion.div
       className="relative"
+      style={{ "--tint": `var(--tint-${project.tint})` } as CSSProperties}
       initial={reduced ? false : { opacity: 0, y: 140, rotate: dealAngle(index), scale: 0.86 }}
       whileInView={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
       viewport={{ once: true, amount: 0.25 }}
@@ -434,7 +435,8 @@ function Media({
     <div
       className="absolute inset-0 grid place-items-center"
       style={{
-        background: `radial-gradient(120% 90% at 20% 10%, oklch(0.78 0.13 ${project.hue}) 0%, oklch(0.45 0.12 ${project.hue + 30}) 55%, oklch(0.25 0.06 ${project.hue + 40}) 100%)`,
+        background:
+          "radial-gradient(120% 90% at 20% 10%, var(--tint) 0%, color-mix(in oklch, var(--tint), black 40%) 55%, color-mix(in oklch, var(--tint) 33%, black) 100%)",
       }}
     >
       <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgb(255_255_255/0.25)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.25)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:radial-gradient(circle_at_50%_40%,black,transparent_75%)]" />

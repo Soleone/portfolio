@@ -24,6 +24,24 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Theming
+
+The header has a theme picker (a shadcn `Select`). Themes are palettes in the same omarchy
+`colors.toml` format as the tasks app, so a palette can be pasted in from there. The default is
+Gilt, and the choice is remembered in `localStorage` (`portfolio.theme`).
+
+- `lib/themes/builtin.ts` holds the palettes. Add a theme by pasting one in.
+- `lib/themes/palette.ts` parses them and derives the slots a palette leaves out.
+- The root layout inlines one `:root[data-theme="..."]` block per theme plus a tiny script that applies
+  the stored choice before first paint, so there is no flash.
+- `app/globals.css` maps the palette slots (`--om-*`) onto the shadcn tokens. Components only use the
+  tokens, so keep colors out of components (project card tints come from `--tint-1..8`).
+- `showcase` is the original design (zinc and pink, follows the OS appearance), kept for comparison.
+  To retire it, delete `SHOWCASE_THEME` in `lib/themes/builtin.ts`, `app/showcase-theme.css` and its
+  `@import` in `globals.css`.
+
+Press `D` to flip between dark and light.
+
 ## Learn More
 
 To learn more, take a look at the following resources:
