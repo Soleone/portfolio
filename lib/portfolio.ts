@@ -24,6 +24,9 @@ export type Project = {
   tech: string[]
   href: string
   icon?: string
+  // From showcase's feed (see lib/showcase.ts): a looping or still image, and a one-click demo.
+  image?: string
+  live?: string
 }
 
 export const priorityRank: Record<ProjectPriority, number> = {
@@ -33,6 +36,16 @@ export const priorityRank: Record<ProjectPriority, number> = {
 }
 
 export const projects: Project[] = [
+  {
+    title: "LogDig",
+    description:
+      "Turns saved Pi coding-agent sessions into a daily Markdown work journal, four sessions at a time, without touching handwritten notes.",
+    year: "2026",
+    priority: "high",
+    type: "CLI utility",
+    tech: ["Node.js", "Pi", "Obsidian"],
+    href: "https://github.com/Soleone/logdig",
+  },
   {
     title: "Pi Tasks",
     description:

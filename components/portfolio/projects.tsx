@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { priorityRank, projects } from "@/lib/portfolio"
+import { withShowcase } from "@/lib/showcase"
 import {
   ArrowUpRight,
   Bot,
@@ -13,11 +14,12 @@ import {
   ScrollText,
   Wrench,
   CirclePlay,
+  Play,
   type LucideIcon,
 } from "lucide-react"
 import { SectionHeading } from "./section-heading"
 
-const orderedProjects = [...projects].sort((a, b) => {
+const orderedProjects = withShowcase(projects).sort((a, b) => {
   const priority = priorityRank[a.priority] - priorityRank[b.priority]
 
   if (priority !== 0) return priority
@@ -69,16 +71,32 @@ export function Projects() {
                 isHero ? "lg:row-span-2" : ""
               }`}
             >
-              <a href={project.href} className="block h-full" target="_blank" rel="noreferrer">
+              <div className="block h-full">
                 <div
                   className={`relative min-h-44 overflow-hidden border-b border-border bg-gradient-to-br ${theme} ${
                     isHero ? "lg:min-h-80" : ""
                   }`}
                 >
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,white_0,transparent_26%),linear-gradient(135deg,transparent_0,transparent_45%,rgb(255_255_255/0.18)_45%,transparent_46%)] opacity-50" />
-                  <div className="absolute -right-12 -top-12 size-44 rounded-full bg-background/40 blur-2xl transition-transform duration-500 group-hover:scale-125" />
+                  {project.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={project.image}
+                      alt=""
+                      loading={isHero ? "eager" : "lazy"}
+                      className="absolute inset-0 size-full object-cover object-top"
+                    />
+                  ) : (
+                    <>
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,white_0,transparent_26%),linear-gradient(135deg,transparent_0,transparent_45%,rgb(255_255_255/0.18)_45%,transparent_46%)] opacity-50" />
+                      <div className="absolute -right-12 -top-12 size-44 rounded-full bg-background/40 blur-2xl transition-transform duration-500 group-hover:scale-125" />
+                    </>
+                  )}
                   <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-6">
-                    <div className="grid size-20 place-items-center overflow-hidden rounded-2xl border border-white/20 bg-background/70 p-3 shadow-xl backdrop-blur md:size-24">
+                    <div
+                      className={`grid size-20 place-items-center overflow-hidden rounded-2xl border border-white/20 bg-background/70 p-3 shadow-xl backdrop-blur md:size-24 ${
+                        project.image ? "invisible" : ""
+                      }`}
+                    >
                       {project.icon ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -99,13 +117,33 @@ export function Projects() {
 
                 <CardContent className={isHero ? "p-6 md:p-8" : "p-5"}>
                   <div className="flex items-start justify-between gap-4">
-                    <h3 className="flex items-center gap-1.5 text-xl font-semibold tracking-tight">
-                      {project.title}
-                      <ArrowUpRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    <h3 className="text-xl font-semibold tracking-tight">
+                      {/* The title link covers the whole card; the Try it link sits above it. */}
+                      <a
+                        href={project.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1.5 after:absolute after:inset-0"
+                      >
+                        {project.title}
+                        <ArrowUpRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                      </a>
                     </h3>
-                    <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
-                      {index + 1}
-                    </span>
+                    {project.live ? (
+                      <a
+                        href={project.live}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="relative z-10 inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/85"
+                      >
+                        <Play className="size-3.5" />
+                        Try it
+                      </a>
+                    ) : (
+                      <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                        {index + 1}
+                      </span>
+                    )}
                   </div>
                   <p className="mt-3 text-pretty leading-relaxed text-muted-foreground">
                     {project.description}
@@ -121,7 +159,7 @@ export function Projects() {
                     ))}
                   </div>
                 </CardContent>
-              </a>
+              </div>
             </Card>
           )
         })}
