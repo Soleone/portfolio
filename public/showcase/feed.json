@@ -200,25 +200,69 @@
       "pitch": "Grade how demoable a project is, from D to S, and get the exact next steps to raise it.",
       "kind": "cli",
       "year": 2026,
+      "tech": [
+        "Node.js"
+      ],
       "repo": "https://github.com/Soleone/showcase",
-      "tier": "C",
+      "demo": {
+        "strategy": "browser-terminal",
+        "local": "npm run demo",
+        "externals": []
+      },
+      "media": {
+        "hero": "media/products-showcase/hero.png",
+        "motion": "media/products-showcase/motion.webp",
+        "capture": "npm run media:capture"
+      },
+      "tier": "A",
       "target": null,
       "gap": [],
-      "source": "draft"
+      "source": "showcase.json"
     },
     {
       "id": "local:products/podcaster",
       "priority": null,
       "type": null,
       "title": "Podcaster",
-      "pitch": "A local-first podcast companion: speak to it with a microphone and it answers out loud.",
-      "kind": "other",
+      "pitch": "Talk to a podcast companion through your microphone and hear it answer out loud. Speech stays on your machine; answers come from your Pi agent.",
+      "kind": "local-web-app",
       "year": 2026,
       "repo": "https://github.com/Soleone/2026-08-06-podcaster",
-      "tier": "C",
+      "demo": {
+        "local": "npm run demo",
+        "externals": [
+          {
+            "name": "Local speech models (recognition and voice)",
+            "type": "model",
+            "seam": "PODCASTER_WEB_BUILD_ENTRY selects the fake-services web build, which swaps the session transport for a canned one",
+            "standIn": "canned",
+            "note": "Nothing you say is transcribed. The replies are fixed text and are not spoken by a voice model."
+          },
+          {
+            "name": "Pi agent (the reply model)",
+            "type": "service",
+            "seam": "The same fake-services build: replies come from the page, not from a Pi process",
+            "standIn": "canned",
+            "note": "Replies are canned. No model provider or Pi account is used."
+          },
+          {
+            "name": "Microphone",
+            "type": "hardware",
+            "seam": "The page asks the browser for the microphone as usual; the demo build keeps the audio in the page",
+            "standIn": "simulated",
+            "note": "Your microphone opens and the level shows, but the audio stays in the page and is never sent anywhere."
+          }
+        ]
+      },
+      "media": {
+        "hero": "media/products-podcaster/hero.png",
+        "motion": "media/products-podcaster/motion.webp",
+        "capture": "npm run media:capture"
+      },
+      "tier": "A",
       "target": null,
       "gap": [],
-      "source": "draft"
+      "source": "showcase.json"
     },
     {
       "id": "local:products/staffed",
@@ -365,17 +409,45 @@
       "priority": null,
       "type": "product",
       "title": "Better Youtube",
-      "pitch": "Adds buttons on YouTube pages:",
+      "pitch": "Add any YouTube video to your favorite playlists in one click, straight from Home or Subscriptions, and undo it right away if you change your mind.",
       "kind": "browser-extension",
       "year": 2026,
       "repo": "https://github.com/Soleone/better-youtube",
-      "media": {
-        "hero": "https://github.com/user-attachments/assets/6afbf21d-2828-4909-a091-38e76f31d957"
+      "demo": {
+        "local": "npm run demo",
+        "externals": [
+          {
+            "name": "YouTube home page",
+            "type": "service",
+            "seam": "--host-resolver-rules points www.youtube.com at the demo server",
+            "standIn": "simulated",
+            "note": "A synthetic copy of the home page layout with invented videos. It is not YouTube."
+          },
+          {
+            "name": "YouTube playlist API",
+            "type": "service",
+            "seam": "window.fetch on the page: the bridge posts to /youtubei/v1/browse/edit_playlist, which the demo page answers itself",
+            "standIn": "canned",
+            "note": "Playlist changes are answered locally and never reach YouTube."
+          },
+          {
+            "name": "Signed-in YouTube account",
+            "type": "account",
+            "seam": "the SAPISID cookie and ytcfg the page provides to the bridge",
+            "standIn": "simulated",
+            "note": "The demo sets a fake login cookie. No account is used."
+          }
+        ]
       },
-      "tier": "C",
+      "media": {
+        "hero": "media/products-better-youtube/hero.png",
+        "motion": "media/products-better-youtube/motion.webp",
+        "capture": "npm run media:capture"
+      },
+      "tier": "A",
       "target": null,
       "gap": [],
-      "source": "draft"
+      "source": "showcase.json"
     },
     {
       "id": "local:remix/stickerbook",
@@ -533,14 +605,45 @@
       "priority": null,
       "type": "proof of concept",
       "title": "Podcaster",
-      "pitch": "A local-first podcast companion: speak to it with a microphone and it answers out loud.",
-      "kind": "other",
+      "pitch": "Talk to a podcast companion through your microphone and hear it answer out loud. Speech stays on your machine; answers come from your Pi agent.",
+      "kind": "local-web-app",
       "year": 2026,
       "repo": "https://github.com/Soleone/2026-08-06-podcaster",
-      "tier": "C",
+      "demo": {
+        "local": "npm run demo",
+        "externals": [
+          {
+            "name": "Local speech models (recognition and voice)",
+            "type": "model",
+            "seam": "PODCASTER_WEB_BUILD_ENTRY selects the fake-services web build, which swaps the session transport for a canned one",
+            "standIn": "canned",
+            "note": "Nothing you say is transcribed. The replies are fixed text and are not spoken by a voice model."
+          },
+          {
+            "name": "Pi agent (the reply model)",
+            "type": "service",
+            "seam": "The same fake-services build: replies come from the page, not from a Pi process",
+            "standIn": "canned",
+            "note": "Replies are canned. No model provider or Pi account is used."
+          },
+          {
+            "name": "Microphone",
+            "type": "hardware",
+            "seam": "The page asks the browser for the microphone as usual; the demo build keeps the audio in the page",
+            "standIn": "simulated",
+            "note": "Your microphone opens and the level shows, but the audio stays in the page and is never sent anywhere."
+          }
+        ]
+      },
+      "media": {
+        "hero": "media/tries-2026-08-06-podcaster/hero.png",
+        "motion": "media/tries-2026-08-06-podcaster/motion.webp",
+        "capture": "npm run media:capture"
+      },
+      "tier": "A",
       "target": null,
       "gap": [],
-      "source": "draft"
+      "source": "showcase.json"
     },
     {
       "id": "github:Soleone/UnrealEngine",

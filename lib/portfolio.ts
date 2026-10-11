@@ -169,6 +169,16 @@ export const projects: Project[] = [
     href: "https://github.com/Soleone/better-youtube",
   },
   {
+    title: "Podcaster",
+    description:
+      "A local-first podcast companion: speak to it through your microphone and it answers out loud, with speech running on your own machine.",
+    year: "2026",
+    priority: "mid",
+    type: "Local web app",
+    tech: ["TypeScript", "React", "Node", "Python", "Pi"],
+    href: "https://github.com/Soleone/2026-08-06-podcaster",
+  },
+  {
     title: "GameFAQs",
     description:
       "A Ruby gem for accessing GameFAQs data, representing older open-source library work in gaming communities.",
