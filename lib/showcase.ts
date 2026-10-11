@@ -72,11 +72,12 @@ export function withShowcase(projects: Project[], { projects: entries }: Showcas
   const enriched = projects.map((project) => {
     const entry = byRepo.get(repoKey(project.href))
     if (!entry) return project
-    const { image, live, description, details } = feedToProject(entry)
-    // A project with its own showcase.json has written its pitch and description for the card, so those win over curated copy.
+    const { image, live, title, description, details } = feedToProject(entry)
+    // A project with its own showcase.json has written its title, pitch and description for the card, so those win over curated copy.
     const own = entry.source === "showcase.json"
     return {
       ...project,
+      title: own ? title : project.title,
       description: own ? description : project.description,
       details: own ? details : (project.details ?? details),
       image: project.image ?? image,
