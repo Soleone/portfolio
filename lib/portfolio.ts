@@ -27,6 +27,8 @@ export type Project = {
   // From showcase's feed (see lib/showcase.ts): a looping or still image, and a one-click demo.
   image?: string
   live?: string
+  // From showcase's feed: S and A projects sort above everything else (see showcaseRank in lib/showcase.ts).
+  showcaseTier?: "S" | "A" | "B" | "C" | "D" | null
 }
 
 export const priorityRank: Record<ProjectPriority, number> = {

@@ -39,8 +39,16 @@ export function feedMedia(repo: string, { projects: entries }: ShowcaseFeed = fe
   return { hero: mediaUrl(media?.hero), motion: mediaUrl(media?.motion), video: mediaUrl(media?.video) }
 }
 
+// Projects the showcase grades S or A sort above the rest of the list. S comes first, then A.
+export function showcaseRank(project: Pick<Project, "showcaseTier">): number {
+  if (project.showcaseTier === "S") return 0
+  if (project.showcaseTier === "A") return 1
+  return 2
+}
+
 export function feedToProject(entry: FeedProject): Project {
   return {
+    showcaseTier: entry.tier,
     title: entry.title,
     description: entry.pitch ?? "",
     year: entry.year ? String(entry.year) : "",
@@ -62,7 +70,7 @@ export function withShowcase(projects: Project[], { projects: entries }: Showcas
     const entry = byRepo.get(repoKey(project.href))
     if (!entry) return project
     const { image, live } = feedToProject(entry)
-    return { ...project, image: project.image ?? image, live: project.live ?? live }
+    return { ...project, image: project.image ?? image, live: project.live ?? live, showcaseTier: entry.tier }
   })
   const added = entries.filter((entry) => entry.priority && !curated.has(repoKey(entry.repo))).map(feedToProject)
   return [...enriched, ...added]

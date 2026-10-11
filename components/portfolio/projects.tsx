@@ -1,5 +1,5 @@
 import { priorityRank, projects, type Project } from "@/lib/portfolio"
-import { feedMedia, withShowcase } from "@/lib/showcase"
+import { feedMedia, showcaseRank, withShowcase } from "@/lib/showcase"
 import {
   Bot,
   BrainCircuit,
@@ -17,6 +17,10 @@ import { ProjectCard, type CardProject } from "./project-card"
 import { SectionHeading } from "./section-heading"
 
 const orderedProjects = withShowcase(projects).sort((a, b) => {
+  const showcase = showcaseRank(a) - showcaseRank(b)
+
+  if (showcase !== 0) return showcase
+
   const priority = priorityRank[a.priority] - priorityRank[b.priority]
 
   if (priority !== 0) return priority
