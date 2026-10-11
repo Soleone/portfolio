@@ -1,5 +1,5 @@
 export const profile = {
-  name: "Dennis Theisen",
+  name: "Soleone",
   role: "Full-Stack Web Developer",
   tagline: "I build accessible, performant web experiences for the modern web.",
   intro:
