@@ -188,7 +188,7 @@
     },
     {
       "id": "local:products/showcase",
-      "priority": null,
+      "priority": "high",
       "title": "showcase",
       "pitch": "Grade how demoable a project is, from D to S, and get the exact next steps to raise it.",
       "description": "Checks the README, media, showcase.json and demo against five tiers and lists what is missing. Comes with an agent skill that does the fixing and a collect command that feeds a portfolio site.",
@@ -198,6 +198,7 @@
         "Node.js"
       ],
       "repo": "https://github.com/Soleone/showcase",
+      "live": "https://showcase.soleone.xyz",
       "demo": {
         "strategy": "browser-terminal",
         "local": "npm run demo",
@@ -208,8 +209,8 @@
         "motion": "media/products-showcase/motion.webp",
         "capture": "npm run media:capture"
       },
-      "tier": "A",
-      "target": null,
+      "tier": "S",
+      "target": "S",
       "gap": [],
       "source": "showcase.json"
     },
