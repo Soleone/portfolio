@@ -16,17 +16,20 @@ import {
 import { ProjectCard, type CardProject } from "./project-card"
 import { SectionHeading } from "./section-heading"
 
-const orderedProjects = withShowcase(projects).sort((a, b) => {
-  const showcase = showcaseRank(a) - showcaseRank(b)
+// Only projects the showcase grades A or S are shown. They sort by priority, then tier (S before A), then year.
+const orderedProjects = withShowcase(projects)
+  .filter((project) => showcaseRank(project) < 2)
+  .sort((a, b) => {
+    const priority = priorityRank[a.priority] - priorityRank[b.priority]
 
-  if (showcase !== 0) return showcase
+    if (priority !== 0) return priority
 
-  const priority = priorityRank[a.priority] - priorityRank[b.priority]
+    const showcase = showcaseRank(a) - showcaseRank(b)
 
-  if (priority !== 0) return priority
+    if (showcase !== 0) return showcase
 
-  return Number(b.year) - Number(a.year)
-})
+    return Number(b.year) - Number(a.year)
+  })
 
 const projectIcons: Record<string, LucideIcon> = {
   "Pi Tasks": Wrench,

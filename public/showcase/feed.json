@@ -188,7 +188,7 @@
     },
     {
       "id": "local:products/showcase",
-      "priority": "high",
+      "priority": "mid",
       "title": "showcase",
       "pitch": "Grade how demoable a project is, from D to S, and get the exact next steps to raise it.",
       "description": "Checks the README, media, showcase.json and demo against five tiers and lists what is missing. Comes with an agent skill that does the fixing and a collect command that feeds a portfolio site.",
@@ -210,7 +210,7 @@
         "capture": "npm run media:capture"
       },
       "tier": "S",
-      "target": "S",
+      "target": "A",
       "gap": [],
       "source": "showcase.json"
     },

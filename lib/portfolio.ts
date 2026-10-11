@@ -29,7 +29,7 @@ export type Project = {
   // From showcase's feed (see lib/showcase.ts): a looping or still image, and a one-click demo.
   image?: string
   live?: string
-  // From showcase's feed: S and A projects sort above everything else (see showcaseRank in lib/showcase.ts).
+  // From showcase's feed: only S and A projects are listed, S first within a priority (see showcaseRank in lib/showcase.ts).
   showcaseTier?: "S" | "A" | "B" | "C" | "D" | null
 }
 

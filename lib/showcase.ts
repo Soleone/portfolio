@@ -40,7 +40,7 @@ export function feedMedia(repo: string, { projects: entries }: ShowcaseFeed = fe
   return { hero: mediaUrl(media?.hero), motion: mediaUrl(media?.motion), video: mediaUrl(media?.video) }
 }
 
-// Projects the showcase grades S or A sort above the rest of the list. S comes first, then A.
+// Only projects the showcase grades S or A are listed (rank 0 and 1). S comes first, then A.
 export function showcaseRank(project: Pick<Project, "showcaseTier">): number {
   if (project.showcaseTier === "S") return 0
   if (project.showcaseTier === "A") return 1
