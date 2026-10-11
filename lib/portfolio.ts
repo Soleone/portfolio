@@ -1,9 +1,10 @@
 export const profile = {
   name: "Soleone",
   role: "Full-Stack Web Developer",
-  tagline: "I build accessible, performant web experiences for the modern web.",
+  tagline: "Fast, joyful products with taste.",
   intro:
-    "I'm a freelance developer who partners with founders and teams to ship polished products. My favorite work lives at the intersection of thoughtful design and robust engineering: interfaces that look great and are built to last.",
+    "Web apps, games and tools for AI coding agents, made with care for the details people feel but rarely notice, and quick to respond the moment you touch them.",
+  bio: "Software engineer based in Ottawa, Canada. Nearly 20 years at Shopify taught me how to ship software at scale, from payments to the Shop app, and I led its blockchain team. These days my own time goes to games and the tooling around AI coding agents.",
   location: "Ottawa, Canada",
   email: "dev@soleone.xyz",
   socials: [
@@ -238,18 +239,50 @@ export const skillGroups: { label: string; items: string[] }[] = [
   { label: "AI", items: ["Pi agent", "Claude", "Cursor"] },
 ]
 
+export const values: { label: string; description: string }[] = [
+  {
+    label: "Taste",
+    description: "Spacing, copy, defaults, and what gets left out. The details nobody asks for and everybody feels.",
+  },
+  {
+    label: "Joy",
+    description: "Software should be fun to use. Games taught me that early, and it shapes everything I build.",
+  },
+  {
+    label: "Snappy",
+    description: "Instant feedback, fast loads, and no spinner where none is needed.",
+  },
+]
+
+export const focusAreas: { label: string; description: string }[] = [
+  {
+    label: "AI",
+    description:
+      "A daily driver of coding agents, building the tooling around them: extensions for tasks, git and subagents, session journaling, memory and coaching.",
+  },
+  {
+    label: "E-commerce",
+    description:
+      "Nearly two decades building commerce software at Shopify, across payments, admin, apps and the Shop app.",
+  },
+  {
+    label: "Blockchain",
+    description:
+      "Former lead of Shopify's blockchain team and in crypto since 2017. Still a keen interest, with NFT and on-chain game experiments along the way.",
+  },
+  {
+    label: "Gaming",
+    description:
+      "Web games, rhythm and puzzle mechanics, Unreal Engine prototypes, and community tools and APIs for games I play.",
+  },
+]
+
 export const experience: { period: string; role: string; company: string; description: string }[] = [
   {
-    period: "2008 - Present",
+    period: "Nearly 20 years",
     role: "Software Engineer",
     company: "Shopify",
     description:
-      "Worked across a broad range of Shopify areas, including Payments, Admin, Apps, technical support, internal tools, the home screen, core architecture, blockchain, Shop app authentication, and the communications platform.",
-  },
-  {
-    period: "2008",
-    role: "Computer Science",
-    company: "University of Koblenz-Landau",
-    description: "Studied computer science before eventually dropping out and relocating to Canada.",
+      "Worked across payments, admin, apps, the Shop app, the communications platform and core architecture, and led the blockchain team.",
   },
 ]

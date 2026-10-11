@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://soleone.xyz"),
   title: "Soleone",
   description:
-    "Freelance full-stack web developer building accessible, performant web experiences. View selected projects, skills, and get in touch.",
+    "Fast, joyful products with taste. Web apps, games and AI agent tooling by Soleone. View selected projects and get in touch.",
   alternates: {
     canonical: "/",
   },
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     siteName: "Soleone Portfolio",
     title: "Soleone",
     description:
-      "Freelance full-stack web developer building accessible, performant web experiences. View selected projects, skills, and get in touch.",
+      "Fast, joyful products with taste. Web apps, games and AI agent tooling by Soleone. View selected projects and get in touch.",
     type: "website",
   },
 };
