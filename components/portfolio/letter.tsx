@@ -59,6 +59,7 @@ export function Letter() {
   const topCorner = useMotionValue(0)
   const bottomCorner = useMotionValue(0)
   const postmark = useMotionValue(0)
+  const waves = useMotionValue(0)
   const x = useMotionValue(0)
   const y = useMotionValue(0)
   const rotate = useMotionValue(0)
@@ -99,9 +100,10 @@ export function Letter() {
     const result = await posted
     if (!result.ok) return returnToSender(result.error)
 
-    // The postmark lands with a little press into the desk.
+    // The postmark lands with a little press into the desk, then the wavy lines are dragged out behind it.
     await Promise.all([
       animate(postmark, 1, { duration: 0.3, ease: easeOutQuint }),
+      animate(waves, 1, { duration: 0.2, delay: 0.14, ease: "easeOut" }),
       animate(scale, [1, 0.96, 1], { duration: 0.34, times: [0, 0.35, 1], ease: "easeOut" }),
     ])
 
@@ -132,7 +134,7 @@ export function Letter() {
   }
 
   function writeAnother() {
-    for (const value of [bottomFold, topFold, topCorner, bottomCorner, postmark, x, y, rotate]) value.jump(0)
+    for (const value of [bottomFold, topFold, topCorner, bottomCorner, postmark, waves, x, y, rotate]) value.jump(0)
     scale.jump(1)
     setDraft(blank)
     setFolds(null)
@@ -155,7 +157,7 @@ export function Letter() {
   )
 
   // Its right end is kept clear for the plane's nose, so the corners never fold over the stamp.
-  const envelope = folds && <Envelope from={draft.name} postedOn={postedOn} postmark={postmark} nose={folds[0] / 2} />
+  const envelope = folds && <Envelope from={draft.name} postedOn={postedOn} postmark={postmark} waves={waves} nose={folds[0] / 2} />
 
   return (
     <div className="relative">
@@ -451,15 +453,19 @@ function Envelope({
   from,
   postedOn,
   postmark,
+  waves,
   nose,
 }: {
   from: string
   postedOn: string
   postmark: MotionValue<number>
+  waves: MotionValue<number>
   nose: number
 }) {
   const opacity = useTransform(postmark, [0, 1], [0, 0.7])
   const markScale = useTransform(postmark, [0, 1], [1.6, 1])
+  // Revealed from the circle outward, as if dragged off the stamp.
+  const clipPath = useTransform(waves, (v) => `inset(0 0 0 ${(1 - v) * 100}%)`)
 
   return (
     <div
@@ -471,9 +477,15 @@ function Envelope({
         <div className={`${smallCaps} truncate`}>From {from}</div>
         <div className="relative shrink-0">
           <Stamp />
-          <motion.div className="absolute top-5 -left-20 text-foreground" style={{ opacity, scale: markScale, rotate: -12 }}>
-            <Postmark date={postedOn} />
-          </motion.div>
+          <div className="absolute top-5 -left-20 -rotate-12 text-foreground">
+            {/* Presses down around the center of the circle. */}
+            <motion.div style={{ opacity, scale: markScale, originX: 86 / 112, originY: 0.5 }}>
+              <Postmark date={postedOn} />
+            </motion.div>
+            <motion.div className="absolute top-0 left-0 opacity-70" style={{ clipPath }}>
+              <Waves />
+            </motion.div>
+          </div>
         </div>
       </div>
       <div className="relative">
@@ -511,14 +523,22 @@ function Stamp() {
 function Postmark({ date }: { date: string }) {
   return (
     <svg width="112" height="52" viewBox="0 0 112 52" fill="none" stroke="currentColor" strokeWidth="1.5">
-      {[16, 26, 36].map((lineY) => (
-        <path key={lineY} d={`M2 ${lineY} q7 -5 14 0 t14 0 t14 0 t14 0`} />
-      ))}
       <circle cx="86" cy="26" r="23" />
       <circle cx="86" cy="26" r="18" strokeWidth="0.75" />
       <text x="86" y="29.5" textAnchor="middle" fill="currentColor" stroke="none" fontSize="10" fontWeight="600">
         {date.toUpperCase()}
       </text>
+    </svg>
+  )
+}
+
+// Shares the postmark's coordinates (and its top left corner), so the lines sit where they were drawn together with it.
+function Waves() {
+  return (
+    <svg width="60" height="52" viewBox="0 0 60 52" fill="none" stroke="currentColor" strokeWidth="1.5">
+      {[16, 26, 36].map((lineY) => (
+        <path key={lineY} d={`M2 ${lineY} q7 -5 14 0 t14 0 t14 0 t14 0`} />
+      ))}
     </svg>
   )
 }
