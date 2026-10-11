@@ -4,6 +4,7 @@ import {
   animate,
   motion,
   useMotionValue,
+  useInView,
   useReducedMotion,
   useTransform,
   type MotionValue,
@@ -13,6 +14,7 @@ import { useRef, useState, type CSSProperties, type PointerEvent, type ReactNode
 import type { ProjectMedia } from "@/lib/showcase"
 import { useTuning } from "./card-tuning"
 import { GithubIcon } from "./github-icon"
+import { springEasing } from "./spring-easing"
 
 export type CardProject = {
   title: string
@@ -34,6 +36,11 @@ const easeOutQuint = [0.22, 1, 0.36, 1] as const
 // Deterministic so server and client agree; a dealt hand never lands perfectly square.
 const dealAngle = (index: number) => ((index * 37) % 17) - 8
 
+// The drop shadow is a gradient, not a blurred element: a CSS blur filter renders a full-size offscreen
+// surface every frame, and a box-shadow leaves a hole under the card. This falls off like the blur it replaced.
+const softShadow =
+  "radial-gradient(closest-side, rgb(0 0 0 / 1) 0%, rgb(0 0 0 / 1) 40%, rgb(0 0 0 / 0.5) 71%, rgb(0 0 0 / 0.2) 88%, transparent 100%)"
+
 // SVG grain makes the surface read as a material instead of a flat fill.
 const grain =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E\")"
@@ -41,6 +48,7 @@ const grain =
 export function ProjectCard({ project, index }: { project: CardProject; index: number }) {
   const { tuning: t } = useTuning()
   const reduced = useReducedMotion() ?? false
+  const dealRef = useRef<HTMLDivElement>(null)
   const hitRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const pressed = useRef(false)
@@ -159,7 +167,11 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
   }
 
   // Each row deals as it scrolls into view, so only cards within a row (up to three) wait on each other.
-  const dealDelay = (index % 3) * t.dealStagger
+  // The deal is a CSS transition, not a JS spring: transform and opacity then run on the compositor and
+  // the card, with all its 3D layers, is not repainted every frame while it flies in.
+  const dealt = useInView(dealRef, { once: true, amount: 0.25 })
+  const dealDelay = (index % 3) * t.dealStagger * 1000
+  const deal = springEasing(t.dealStiffness, t.dealDamping)
   const showingBack = turns % 2 === 1
   const surface: CSSProperties = {
     // Tinted from the theme's card color, so every theme gets its own take on the project tint.
@@ -168,27 +180,37 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
   const layer = (share: number): CSSProperties => ({ transform: `translateZ(${t.depth * share}px)` })
 
   return (
-    <motion.div
-      className="relative"
-      style={{ "--tint": `var(--tint-${project.tint})` } as CSSProperties}
-      initial={reduced ? false : { opacity: 0, y: 140, rotate: dealAngle(index), scale: 0.86 }}
-      whileInView={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
-      viewport={{ once: true, amount: 0.25 }}
-      transition={{
-        ...spring(t.dealStiffness, t.dealDamping),
-        delay: dealDelay,
-        opacity: { duration: 0.3, delay: dealDelay, ease: easeOutQuint },
-      }}
+    <div
+      ref={dealRef}
+      // Cards off screen are skipped entirely (no layout, paint or 3D layers). That clips to the box, so the
+      // padding gives the shadow and tilt room, with a matching negative margin to keep the grid layout.
+      // Only the card itself takes pointer events, or the padding would cover its neighbors.
+      className="pointer-events-none relative -m-28 p-28 [contain-intrinsic-height:auto_440px] [content-visibility:auto]"
+      style={
+        {
+          "--tint": `var(--tint-${project.tint})`,
+          ...(reduced
+            ? {}
+            : {
+                opacity: dealt ? 1 : 0,
+                transform: dealt ? "none" : `translateY(140px) rotate(${dealAngle(index)}deg) scale(0.86)`,
+                transition: dealt
+                  ? `transform ${deal.duration}ms ${deal.easing} ${dealDelay}ms, opacity 300ms cubic-bezier(0.22, 1, 0.36, 1) ${dealDelay}ms`
+                  : "none",
+              }),
+        } as CSSProperties
+      }
     >
+      {/* Its own layer, so moving or fading the shadow never repaints it. */}
       <motion.div
         aria-hidden
-        className="absolute inset-x-[7%] top-[10%] bottom-0 rounded-[28px] bg-black blur-2xl dark:bg-black"
-        style={{ x: shadowX, y: shadowY, scaleX: shadowScaleX, opacity: shadowOpacity }}
+        className="absolute inset-x-[calc(7%-60px)] top-[calc(10%-60px)] -bottom-[60px] will-change-[transform,opacity]"
+        style={{ x: shadowX, y: shadowY, scaleX: shadowScaleX, opacity: shadowOpacity, background: softShadow }}
       />
 
       <div
         ref={hitRef}
-        className="relative cursor-pointer touch-pan-y select-none"
+        className="pointer-events-auto relative cursor-pointer touch-pan-y select-none"
         style={{ perspective: t.perspective }}
         onPointerEnter={onEnter}
         onPointerMove={onMove}
@@ -315,7 +337,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
           </Face>
         </motion.div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 

@@ -12,7 +12,8 @@ export default function Page() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main>
+      {/* Project cards pad themselves for their shadow, which spills past the viewport edge. Clip it so it can't scroll the page sideways. */}
+      <main className="overflow-x-clip">
         <Hero />
         <Separator />
         <Projects />
