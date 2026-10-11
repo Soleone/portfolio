@@ -10,7 +10,7 @@ const from = process.env.CONTACT_FROM ?? "Portfolio <onboarding@resend.dev>"
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-export async function sendLetter(form: FormData): Promise<SendResult> {
+export async function sendMail(form: FormData): Promise<SendResult> {
   // A field people never see. Bots fill it in, and get told it worked.
   if (String(form.get("website") ?? "")) return { ok: true }
 
@@ -25,7 +25,7 @@ export async function sendLetter(form: FormData): Promise<SendResult> {
 
   const key = process.env.RESEND_API_KEY
   if (!key) {
-    console.error("sendLetter: RESEND_API_KEY is not set")
+    console.error("sendMail: RESEND_API_KEY is not set")
     return { ok: false, error: "The mailbox isn't set up yet. Please try again later." }
   }
 
@@ -37,8 +37,8 @@ export async function sendLetter(form: FormData): Promise<SendResult> {
     text: `${message}\n\n${name}\n${email}`,
   })
   if (error) {
-    console.error("sendLetter:", error)
-    return { ok: false, error: "The letter couldn't be sent. Please try again in a moment." }
+    console.error("sendMail:", error)
+    return { ok: false, error: "The mail couldn't be sent. Please try again in a moment." }
   }
   return { ok: true }
 }

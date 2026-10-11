@@ -46,7 +46,7 @@ folder. Its README lists the files and the setup.
 
 ## Contact form
 
-The letter in the contact section posts to a server action (`app/actions/send-letter.ts`) that emails it
+The letter in the contact section posts to a server action (`app/actions/send-mail.ts`) that emails it
 through [Resend](https://resend.com), with the sender's address as the reply-to. The letter folds while it
 travels and only flies off once Resend accepts it; if sending fails it unfolds again with an error.
 

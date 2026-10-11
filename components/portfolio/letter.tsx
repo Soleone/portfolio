@@ -8,7 +8,7 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { profile } from "@/lib/portfolio"
-import { sendLetter, type SendResult } from "@/app/actions/send-letter"
+import { sendMail, type SendResult } from "@/app/actions/send-mail"
 import { grain } from "./project-card"
 
 type Draft = { name: string; email: string; message: string }
@@ -70,8 +70,8 @@ export function Letter() {
   async function send(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     // Posted right away; the fold plays while it travels and only waits for the answer at the postmark.
-    const posted = sendLetter(new FormData(event.currentTarget)).catch(
-      (): SendResult => ({ ok: false, error: "The letter couldn't be sent. Check your connection and try again." }),
+    const posted = sendMail(new FormData(event.currentTarget)).catch(
+      (): SendResult => ({ ok: false, error: "The mail couldn't be sent. Check your connection and try again." }),
     )
     setError(null)
     setPostedOn(new Date().toLocaleDateString("en", { month: "short", day: "numeric" }))
@@ -314,7 +314,7 @@ function Sheet({
             </p>
           )}
           <Button type={live ? "submit" : "button"} disabled={pending} className="shrink-0">
-            {pending ? "Sending..." : "Send letter"}
+            {pending ? "Sending..." : "Send mail"}
             <Send data-icon="inline-end" />
           </Button>
         </div>
