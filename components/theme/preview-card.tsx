@@ -34,16 +34,23 @@ const EDGE_STEP = 1.2 // px between slices, so the slab is about 6px thick
  * With `depth`, it becomes a physical card for a 3D parent: the surface, text and button float at
  * their own heights (px times depth) and it gains thickness. Nothing inside may clip, since
  * overflow would flatten the layers back onto the face.
+ *
+ * With `selectable`, its Select button rises on hover (only where there is hover). `pressed` sinks it;
+ * the owner sets it, since a press may come from a touch or a key, which CSS :active misses.
  */
 export function ThemePreviewCard({
   theme,
   depth = 0,
   className,
   style,
+  selectable = false,
+  pressed = false,
   children,
 }: {
   theme: ThemeOption
   depth?: number
+  selectable?: boolean
+  pressed?: boolean
   className?: string
   style?: CSSProperties
   children?: ReactNode // overlays drawn above every layer, such as glare
@@ -117,7 +124,20 @@ export function ThemePreviewCard({
         </div>
 
         <div className="mt-5 flex items-center justify-center" style={lift(14)}>
-          <span className="inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow-[0_6px_14px_-5px_var(--primary)]">
+          <span
+            data-select
+            className={cn(
+              "inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground",
+              "shadow-[0_0_0_0_transparent,0_6px_14px_-5px_var(--primary)] transition-[scale,box-shadow,filter] duration-150 ease-out",
+              // Hover lights it up in place: brighter, with a soft halo of its own color around it.
+              selectable &&
+                !pressed &&
+                "hover:shadow-[0_0_0_2px_color-mix(in_oklab,var(--primary)_28%,transparent),0_8px_18px_-5px_var(--primary)] hover:brightness-110",
+              // Pressed it sinks into the card: shaded inside, its glow pulled in, a touch smaller.
+              pressed &&
+                "scale-[0.985] shadow-[inset_0_1px_2px_rgb(0_0_0/0.18),0_3px_8px_-4px_var(--primary)] brightness-95 duration-75",
+            )}
+          >
             Select
           </span>
         </div>

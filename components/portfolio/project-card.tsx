@@ -45,6 +45,8 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
   const videoRef = useRef<HTMLVideoElement>(null)
   const pressed = useRef(false)
   const hovered = useRef(false)
+  // A touch has no hover: a sideways drag tilts the card instead (up and down still scroll the page).
+  const touch = useRef({ x: 0, y: 0, tilting: false })
   const [turns, setTurns] = useState(0)
 
   // Pointer position on the card, 0..1. Springs keep the glare from snapping when the pointer jumps.
@@ -108,7 +110,19 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
   }
 
   const onMove = (event: PointerEvent) => {
-    if (event.pointerType !== "touch") aim(event)
+    if (event.pointerType !== "touch") return aim(event)
+    const { current } = touch
+    if (!current.tilting) {
+      const dx = event.clientX - current.x
+      const dy = event.clientY - current.y
+      // Wait until it is clearly sideways, so the start of a scroll never twitches the card.
+      if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy)) return
+      // From here it is a hover: the card lifts toward the finger instead of staying pressed in.
+      current.tilting = true
+      pressed.current = false
+      animate(lift, 1, follow)
+    }
+    aim(event)
   }
 
   const onLeave = () => {
@@ -121,7 +135,8 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
     videoRef.current?.pause()
   }
 
-  const onDown = () => {
+  const onDown = (event: PointerEvent) => {
+    touch.current = { x: event.clientX, y: event.clientY, tilting: false }
     pressed.current = true
     animate(lift, -1, press)
   }
@@ -139,7 +154,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
   }
 
   const onClick = (event: React.MouseEvent) => {
-    if (!t.flip || (event.target as HTMLElement).closest("a, button")) return
+    if (!t.flip || touch.current.tilting || (event.target as HTMLElement).closest("a, button")) return
     turn()
   }
 

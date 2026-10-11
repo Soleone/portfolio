@@ -22,6 +22,7 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   type PointerEvent,
+  type RefObject,
   type WheelEvent,
 } from "react"
 import { Button } from "@/components/ui/button"
@@ -45,6 +46,7 @@ const PERSPECTIVE = 1100 // px
 const TILT = 10 // degrees the front card leans toward the pointer at its edge
 const RING_SLOTS = 24 // the fewest cards the ring is sized for
 const REVEAL_MS = 750 // how long the chosen theme takes to spread over the page
+const KEY_PRESS_MS = 140 // how long Enter holds the Select button down
 
 const spring = (stiffness: number, damping: number) => ({ type: "spring" as const, stiffness, damping })
 const turnSpring = spring(260, 30)
@@ -118,6 +120,10 @@ export function ThemePicker() {
   // Set on a confirmed choice: the picker vanishes at once, so the reveal shows only the page. The ring
   // cards are not drawn at all, since each sets its own visibility and would show through a hidden parent.
   const [revealing, setRevealing] = useState(false)
+  // The front card's Select button sinks while a pointer holds it, and Enter presses it visibly
+  // before the choice goes through. CSS :active would miss touches, which it often skips.
+  const [keyPressed, setKeyPressed] = useState(false)
+  const [held, setHeld] = useState(false)
 
   // Continuous ring position in cards; the front card is the one it settles on.
   const position = useMotionValue(0)
@@ -243,7 +249,13 @@ export function ThemePicker() {
     } else if ((event.key === "Enter" || event.key === " ") && event.target === stage.current) {
       // Only from the ring itself: Enter on Close means that button.
       event.preventDefault()
-      commit(frontTheme)
+      if (event.repeat || keyPressed) return
+      if (reduced) return commit(frontTheme)
+      setKeyPressed(true)
+      window.setTimeout(() => {
+        setKeyPressed(false)
+        commit(frontTheme)
+      }, KEY_PRESS_MS)
     } else if (event.key === "Home" || event.key === "End") {
       event.preventDefault()
       const here = Math.round(target.current)
@@ -273,37 +285,71 @@ export function ThemePicker() {
   // Dragging anywhere moves the ring 1:1 under the pointer; letting go flings it on with the speed
   // of the last moment of the drag. A tap on a coasting throw only stops it. A tap during a turn
   // to a card leaves the turn going, so a click on the card coming forward counts at once.
+  // A touch has no hover, so on a touchscreen the gesture's first direction decides: sideways turns
+  // the ring, up or down on the front card tilts it under the finger for the rest of the touch.
   const drag = useRef({
     x: 0,
+    y: 0,
     start: 0,
     moved: false,
     caught: false,
+    // A touch waits to see its direction ("pending"); a mouse always drags the ring.
+    gesture: "ring" as "pending" | "ring" | "tilt" | "none",
     samples: [] as { t: number; x: number }[],
   })
+  const frontAim = useRef<FrontAim | null>(null)
   const [dragging, setDragging] = useState(false)
   const onPointerDown = (event: PointerEvent) => {
     if (event.button !== 0 || (event.target as HTMLElement).closest("button")) return
-    // Clicks still count on a ring too small to turn; there is just nothing to drag.
+    const touch = event.pointerType === "touch"
+    const card = (event.target as HTMLElement).closest<HTMLElement>("[data-theme-index]")
+    const onFront = card !== null && Math.round(offset(Number(card.dataset.themeIndex), target.current, count)) === 0
+    if (onFront && (event.target as HTMLElement).closest("[data-select]")) {
+      setHeld(true)
+      const letGo = () => {
+        setHeld(false)
+        window.removeEventListener("pointerup", letGo)
+        window.removeEventListener("pointercancel", letGo)
+      }
+      window.addEventListener("pointerup", letGo)
+      window.addEventListener("pointercancel", letGo)
+    }
+    // Clicks still count on a ring too small to turn; there is just nothing to drag, only to tilt.
     drag.current.moved = drag.current.caught = false
-    if (count < 2) return
+    drag.current.gesture = "ring"
+    if (count < 2 && !(touch && onFront)) return
     const caught = flinging.current && Math.abs(position.getVelocity()) > CATCH_SPEED
     if (caught) position.stop()
     drag.current = {
       x: event.clientX,
+      y: event.clientY,
       start: position.get(),
       moved: false,
       caught,
+      gesture: touch ? "pending" : "ring",
       samples: [{ t: event.timeStamp, x: event.clientX }],
     }
     const move = (moveEvent: globalThis.PointerEvent) => {
       const { current } = drag
+      const dx = moveEvent.clientX - current.x
+      if (current.gesture === "pending") {
+        const dy = moveEvent.clientY - current.y
+        if (Math.hypot(dx, dy) < 6) return
+        // Up or down tilts the front card if it started on it, and does nothing anywhere else.
+        if (Math.abs(dy) > Math.abs(dx)) current.gesture = onFront && !reduced ? "tilt" : "none"
+        else current.gesture = count < 2 ? "none" : "ring"
+        // A drag that started on the button is no longer pressing it.
+        setHeld(false)
+      }
+      if (current.gesture === "tilt") return frontAim.current?.aim(moveEvent.clientX, moveEvent.clientY)
+      if (current.gesture !== "ring") return
       current.samples.push({ t: moveEvent.timeStamp, x: moveEvent.clientX })
       while (current.samples.length > 2 && moveEvent.timeStamp - current.samples[0].t > VELOCITY_WINDOW)
         current.samples.shift()
-      const dx = moveEvent.clientX - current.x
       if (!current.moved && Math.abs(dx) < 4) return
       if (!current.moved) {
         // The drag takes over from wherever a turn has got to, without a jump.
+        setHeld(false)
         position.stop()
         current.start = position.get() + dx / (SPACING * fit)
         setDragging(true)
@@ -316,6 +362,7 @@ export function ThemePicker() {
       window.removeEventListener("pointerup", up)
       window.removeEventListener("pointercancel", up)
       setDragging(false)
+      if (drag.current.gesture === "tilt") frontAim.current?.release()
       const { samples } = drag.current
       const first = samples[0]
       const last = samples[samples.length - 1]
@@ -335,7 +382,8 @@ export function ThemePicker() {
   // "Front" is where the ring is heading, so the card a turn is bringing forward already counts.
   // The empty space around the ring leaves.
   const onClick = (event: MouseEvent) => {
-    if (drag.current.moved || drag.current.caught) return
+    const { moved, caught, gesture } = drag.current
+    if (moved || caught || gesture === "tilt" || gesture === "none") return
     const element = event.target as HTMLElement
     if (element.closest("button")) return
     const card = element.closest<HTMLElement>("[data-theme-index]")
@@ -444,6 +492,8 @@ export function ThemePicker() {
                     position={position}
                     isFront={index === front}
                     tilt={index === front && !dragging && !reduced}
+                    aimRef={frontAim}
+                    pressed={index === front && (keyPressed || held)}
                   />
                 ))}
             </div>
@@ -467,6 +517,10 @@ export function ThemePicker() {
 }
 
 // Memoized: a fast spin changes the front card many times a second, and only two cards care.
+type FrontAim = { aim: (x: number, y: number) => void; release: () => void }
+// A share of the card (0..1, past its edges too) as a tilt from -1 to 1.
+const unit = (share: number) => Math.min(1, Math.max(-1, share * 2 - 1))
+
 const RingCard = memo(function RingCard({
   theme,
   index,
@@ -474,6 +528,8 @@ const RingCard = memo(function RingCard({
   position,
   isFront,
   tilt,
+  aimRef,
+  pressed,
 }: {
   theme: ThemeOption
   index: number
@@ -481,6 +537,8 @@ const RingCard = memo(function RingCard({
   position: MotionValue<number>
   isFront: boolean
   tilt: boolean
+  aimRef: RefObject<FrontAim | null> // where the front card takes a touch tilt from the ring's gestures
+  pressed: boolean
 }) {
   // A filtered ring keeps the full ring's spacing, so a few matches sit side by side, not spread round.
   const slots = Math.max(count, RING_SLOTS)
@@ -532,12 +590,32 @@ const RingCard = memo(function RingCard({
 
   // Aim on the untilted slot, not the card: a tilting card swings its far corner out from under the
   // pointer, which would read as leaving, flatten it, re-enter and jitter.
-  const aim = (event: PointerEvent<HTMLDivElement>) => {
-    if (!tilt || event.pointerType === "touch") return
-    const rect = event.currentTarget.getBoundingClientRect()
-    tx.set(((event.clientX - rect.left) / rect.width) * 2 - 1)
-    ty.set(((event.clientY - rect.top) / rect.height) * 2 - 1)
-    shine.set(1)
+  const slot = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!tilt) return
+    const handle: FrontAim = {
+      aim(x, y) {
+        const rect = slot.current?.getBoundingClientRect()
+        if (!rect) return
+        tx.set(unit((x - rect.left) / rect.width))
+        ty.set(unit((y - rect.top) / rect.height))
+        shine.set(1)
+      },
+      release() {
+        tx.set(0)
+        ty.set(0)
+        shine.set(0)
+      },
+    }
+    aimRef.current = handle
+    return () => {
+      if (aimRef.current === handle) aimRef.current = null
+    }
+  }, [tilt, aimRef, tx, ty, shine])
+
+  // A touch tilts through the ring's gestures (aimRef) instead, once it is clear it is not a swipe.
+  const hover = (event: PointerEvent<HTMLDivElement>) => {
+    if (tilt && event.pointerType !== "touch") aimRef.current?.aim(event.clientX, event.clientY)
   }
 
   return (
@@ -552,8 +630,10 @@ const RingCard = memo(function RingCard({
         visibility,
         zIndex,
       }}
-      onPointerMove={aim}
-      onPointerLeave={() => {
+      ref={slot}
+      onPointerMove={hover}
+      onPointerLeave={(event) => {
+        if (event.pointerType === "touch") return // a touch tilt ends with the gesture
         tx.set(0)
         ty.set(0)
         shine.set(0)
@@ -572,7 +652,7 @@ const RingCard = memo(function RingCard({
         className="relative size-full transform-3d"
         style={{ rotateX, rotateY }}
       >
-        <ThemePreviewCard theme={theme} depth={1} className="size-full">
+        <ThemePreviewCard theme={theme} depth={1} selectable={isFront} pressed={pressed} className="size-full">
           <motion.div aria-hidden className="absolute inset-0 rounded-[22px] bg-black" style={{ opacity: shade }} />
           <Sheen
             glareX={glareX}
