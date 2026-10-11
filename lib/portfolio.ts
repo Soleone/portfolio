@@ -31,6 +31,8 @@ export type Project = {
   live?: string
   // From showcase's feed: only S and A projects are listed, S first within a priority (see showcaseRank in lib/showcase.ts).
   showcaseTier?: "S" | "A" | "B" | "C" | "D" | null
+  // Position in the showcase registry (portfolio.json), which the owner reorders with `showcase manage`.
+  feedOrder?: number
 }
 
 export const priorityRank: Record<ProjectPriority, number> = {

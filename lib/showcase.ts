@@ -47,8 +47,9 @@ export function showcaseRank(project: Pick<Project, "showcaseTier">): number {
   return 2
 }
 
-export function feedToProject(entry: FeedProject): Project {
+export function feedToProject(entry: FeedProject, feedOrder?: number): Project {
   return {
+    feedOrder,
     showcaseTier: entry.tier,
     title: entry.title,
     description: entry.pitch ?? "",
@@ -84,8 +85,12 @@ export function withShowcase(projects: Project[], { projects: entries }: Showcas
       live: project.live ?? live,
       priority: entry.priority ?? project.priority,
       showcaseTier: entry.tier,
+      feedOrder: entries.indexOf(entry),
     }
   })
-  const added = entries.filter((entry) => entry.priority && !curated.has(repoKey(entry.repo))).map(feedToProject)
+  const added = entries
+    .map((entry, index) => ({ entry, index }))
+    .filter(({ entry }) => entry.priority && !curated.has(repoKey(entry.repo)))
+    .map(({ entry, index }) => feedToProject(entry, index))
   return [...enriched, ...added]
 }

@@ -16,7 +16,7 @@ import {
 import { ProjectCard, type CardProject } from "./project-card"
 import { SectionHeading } from "./section-heading"
 
-// Only projects the showcase grades A or S are shown. They sort by priority, then tier (S before A), then year.
+// Only projects the showcase grades A or S are shown. They sort by priority, then tier (S before A), then the registry order (reordered with `showcase manage`), then year.
 const orderedProjects = withShowcase(projects)
   .filter((project) => showcaseRank(project) < 2)
   .sort((a, b) => {
@@ -27,6 +27,10 @@ const orderedProjects = withShowcase(projects)
     const showcase = showcaseRank(a) - showcaseRank(b)
 
     if (showcase !== 0) return showcase
+
+    const order = (a.feedOrder ?? Infinity) - (b.feedOrder ?? Infinity)
+
+    if (order !== 0 && !Number.isNaN(order)) return order
 
     return Number(b.year) - Number(a.year)
   })
@@ -43,6 +47,7 @@ const projectIcons: Record<string, LucideIcon> = {
   "Pi Multiplayer": Bot,
   Gunchained: Gem,
   "Better YouTube": CirclePlay,
+  "Better Youtube": CirclePlay,
   Vibestep: Gamepad2,
   GameFAQs: ScrollText,
   SC2Ranks: Gem,
