@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { profile } from "@/lib/portfolio"
-import { ArrowDown, MapPin } from "lucide-react"
+import { MapPin } from "lucide-react"
 
 export function Hero() {
   return (
@@ -27,14 +27,6 @@ export function Hero() {
           {profile.location}
         </span>
       </div>
-
-      <a
-        href="#work"
-        className="mt-16 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowDown className="size-4 animate-bounce" />
-        Scroll to explore
-      </a>
     </section>
   )
 }
