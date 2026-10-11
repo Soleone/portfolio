@@ -36,9 +36,15 @@ const smallCaps = "text-[11px] font-medium tracking-wider text-muted-foreground 
 // The underside of the paper, showing where a corner is folded over the outside.
 const paperCrease: CSSProperties = { background: "color-mix(in oklch, var(--card) 84%, var(--foreground))" }
 
-export function Letter() {
+type Props = {
+  // Both are for the lab, which plays the animation without writing a letter or sending a real one.
+  initial?: Draft
+  deliver?: (form: FormData) => Promise<SendResult>
+}
+
+export function Letter({ initial = blank, deliver = sendMail }: Props) {
   const reduced = useReducedMotion() ?? false
-  const [draft, setDraft] = useState(blank)
+  const [draft, setDraft] = useState(initial)
   const [phase, setPhase] = useState<"writing" | "sending" | "sent">("writing")
   // Where the sheet folds: a third and two thirds down, and its full height.
   const [folds, setFolds] = useState<[number, number, number] | null>(null)
@@ -71,7 +77,7 @@ export function Letter() {
   async function send(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     // Posted right away; the fold plays while it travels and only waits for the answer at the postmark.
-    const posted = sendMail(new FormData(event.currentTarget)).catch(
+    const posted = deliver(new FormData(event.currentTarget)).catch(
       (): SendResult => ({ ok: false, error: "The mail couldn't be sent. Check your connection and try again." }),
     )
     setError(null)
