@@ -39,10 +39,6 @@ export function SiteHeader() {
         <div className="flex items-center gap-2">
           <ThemePicker />
 
-          <div className="hidden md:block">
-            <Button nativeButton={false} size="sm" render={<a href="#contact">Get in touch</a>} />
-          </div>
-
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger
               render={

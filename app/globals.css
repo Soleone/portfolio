@@ -81,7 +81,7 @@
   --foreground: var(--om-foreground);
   --card: var(--om-background);
   --card-foreground: var(--om-foreground);
-  --popover: var(--om-background);
+  --popover: var(--om-dark-background);
   --popover-foreground: var(--om-foreground);
   --primary: var(--om-accent);
   --primary-foreground: var(--om-on-accent);

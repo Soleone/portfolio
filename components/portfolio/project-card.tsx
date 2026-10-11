@@ -8,10 +8,11 @@ import {
   useTransform,
   type MotionValue,
 } from "motion/react"
-import { ArrowUpRight, CodeXml, Play, RotateCcw } from "lucide-react"
+import { ArrowUpRight, Play, RotateCcw } from "lucide-react"
 import { useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react"
 import type { ProjectMedia } from "@/lib/showcase"
 import { useTuning } from "./card-tuning"
+import { GithubIcon } from "./github-icon"
 
 export type CardProject = {
   title: string
@@ -195,7 +196,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
               </div>
             </div>
 
-            {/* Fixed-height slots keep every card the same size whatever the copy: one-line title, three-line pitch, one row of tags. */}
+            {/* Fixed-height slots keep every card the same size whatever the copy: one-line title, three-line pitch. */}
             <div className="px-5 pt-2 pb-4" style={layer(0.55)}>
               <div className="flex items-center gap-2 text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
                 <span>{project.type}</span>
@@ -206,13 +207,6 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
               <p className="mt-1.5 line-clamp-3 h-[4.875em] text-sm leading-relaxed text-pretty text-muted-foreground">
                 {project.pitch}
               </p>
-              <div className="mt-3 flex h-6 flex-wrap gap-1.5 overflow-hidden">
-                {project.tech.slice(0, 4).map((tag) => (
-                  <span key={tag} className="rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[11px] font-medium">
-                    {tag}
-                  </span>
-                ))}
-              </div>
             </div>
 
             <div className="flex items-center gap-2 px-5 pb-5" style={layer(1)}>
@@ -234,7 +228,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
                 aria-label={`${project.title} source code`}
                 className="grid size-8 place-items-center rounded-full bg-foreground/[0.06] transition-colors hover:bg-foreground/10"
               >
-                <CodeXml className="size-4" />
+                <GithubIcon className="size-4" />
               </a>
               {t.flip && (
                 <button

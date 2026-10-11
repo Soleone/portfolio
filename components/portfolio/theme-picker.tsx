@@ -35,7 +35,7 @@ export function ThemePicker() {
 
   return (
     <Select value={theme ?? null} onValueChange={(name) => name && setTheme(name)}>
-      <SelectTrigger size="sm" aria-label="Theme">
+      <SelectTrigger size="sm" aria-label="Theme" className="dark:bg-transparent">
         <SelectValue>
           {active && (
             <>
