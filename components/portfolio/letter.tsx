@@ -212,7 +212,7 @@ export function Letter() {
             transition={{ duration: 0.6, ease: easeOutQuint, delay: reduced ? 0 : 0.1 }}
           >
             <span className="text-sm font-medium tracking-wider text-primary uppercase">Sent</span>
-            <h3 className="text-2xl font-semibold tracking-tight text-balance">Your letter is on its way.</h3>
+            <h3 className="text-2xl font-semibold tracking-tight text-balance">Your mail is on its way.</h3>
             <p className="max-w-sm text-pretty text-muted-foreground">
               Thanks, {draft.name}. I&apos;ll write back to {draft.email} within a day.
             </p>
