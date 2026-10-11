@@ -11,6 +11,7 @@ export type FeedProject = {
   type: string | null
   title: string
   pitch?: string
+  description?: string
   kind?: string
   year?: number
   tech?: string[]
@@ -51,6 +52,7 @@ export function feedToProject(entry: FeedProject): Project {
     showcaseTier: entry.tier,
     title: entry.title,
     description: entry.pitch ?? "",
+    details: entry.description,
     year: entry.year ? String(entry.year) : "",
     priority: entry.priority ?? "low",
     type: entry.type ?? entry.kind ?? "",
@@ -61,7 +63,8 @@ export function feedToProject(entry: FeedProject): Project {
   }
 }
 
-// Curated projects keep their copy and get media and a live link from the feed (matched by repo).
+// Curated projects keep their copy and get media and a live link from the feed (matched by repo), unless the
+// project's own showcase.json supplies the copy.
 // Feed projects with a priority that the curated list lacks are appended.
 export function withShowcase(projects: Project[], { projects: entries }: ShowcaseFeed = feed): Project[] {
   const byRepo = new Map(entries.filter((entry) => entry.repo).map((entry) => [repoKey(entry.repo), entry]))
@@ -69,8 +72,17 @@ export function withShowcase(projects: Project[], { projects: entries }: Showcas
   const enriched = projects.map((project) => {
     const entry = byRepo.get(repoKey(project.href))
     if (!entry) return project
-    const { image, live } = feedToProject(entry)
-    return { ...project, image: project.image ?? image, live: project.live ?? live, showcaseTier: entry.tier }
+    const { image, live, description, details } = feedToProject(entry)
+    // A project with its own showcase.json has written its pitch and description for the card, so those win over curated copy.
+    const own = entry.source === "showcase.json"
+    return {
+      ...project,
+      description: own ? description : project.description,
+      details: own ? details : (project.details ?? details),
+      image: project.image ?? image,
+      live: project.live ?? live,
+      showcaseTier: entry.tier,
+    }
   })
   const added = entries.filter((entry) => entry.priority && !curated.has(repoKey(entry.repo))).map(feedToProject)
   return [...enriched, ...added]

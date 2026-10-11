@@ -55,6 +55,7 @@ export function toCardProject(project: Project, index: number): CardProject {
   return {
     title: project.title,
     pitch: project.description,
+    details: project.details,
     year: project.year,
     type: project.type,
     tech: project.tech,

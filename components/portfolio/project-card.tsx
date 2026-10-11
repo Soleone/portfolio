@@ -19,6 +19,7 @@ import { springEasing } from "./spring-easing"
 export type CardProject = {
   title: string
   pitch: string
+  details?: string // the back's longer copy; the front already shows the pitch
   year: string
   type: string
   tech: string[]
@@ -297,7 +298,9 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
                   </div>
                 </div>
               </div>
-              <p className="mt-5 text-sm leading-relaxed text-pretty">{project.pitch}</p>
+              {project.details && (
+                <p className="mt-5 line-clamp-6 text-sm leading-relaxed text-pretty">{project.details}</p>
+              )}
               <div className="mt-5 text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Built with</div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {project.tech.map((tag) => (

@@ -18,6 +18,8 @@ export type ProjectPriority = "high" | "mid" | "low"
 export type Project = {
   title: string
   description: string
+  // Optional longer copy for the back of the card. Never restates the description.
+  details?: string
   year: string
   priority: ProjectPriority
   type: string
