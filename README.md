@@ -42,7 +42,6 @@ folder. Its README lists the files and the setup.
 - `showcase` is the original design (zinc and pink, follows the OS appearance), kept for comparison.
   To retire it, delete `SHOWCASE_THEME` in `components/theme/builtin.ts`, `components/theme/showcase.css`
   and its `@import` in `theme.css`.
-- `/lab/themes` is an unlinked playground for the picker.
 
 ## Contact form
 

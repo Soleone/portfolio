@@ -1,9 +1,9 @@
 "use client"
 
-import { createContext, useContext, useState, type ReactNode } from "react"
+import { createContext, useContext } from "react"
 
 // Every knob that shapes how a project card feels. Cards read these from context: the site uses the
-// defaults, and /lab wraps cards in a TuningProvider with a panel to adjust them live. Springs are { stiffness, damping, mass } so motion can
+// defaults. Springs are { stiffness, damping, mass } so motion can
 // hand velocity from one to the next when an interaction interrupts another (hover -> press -> release).
 export type Tuning = {
   tiltMax: number // degrees at the card edge
@@ -53,16 +53,6 @@ export const defaultTuning: Tuning = {
   flip: true,
 }
 
-type TuningContext = {
-  tuning: Tuning
-  setTuning: (next: Tuning) => void
-}
-
-const Context = createContext<TuningContext>({ tuning: defaultTuning, setTuning: () => {} })
-
-export function TuningProvider({ children }: { children: ReactNode }) {
-  const [tuning, setTuning] = useState(defaultTuning)
-  return <Context value={{ tuning, setTuning }}>{children}</Context>
-}
+const Context = createContext({ tuning: defaultTuning })
 
 export const useTuning = () => useContext(Context)
