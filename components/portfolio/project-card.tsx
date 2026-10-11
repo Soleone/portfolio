@@ -42,7 +42,7 @@ const softShadow =
   "radial-gradient(closest-side, rgb(0 0 0 / 1) 0%, rgb(0 0 0 / 1) 40%, rgb(0 0 0 / 0.5) 71%, rgb(0 0 0 / 0.2) 88%, transparent 100%)"
 
 // SVG grain makes the surface read as a material instead of a flat fill.
-const grain =
+export const grain =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E\")"
 
 export function ProjectCard({ project, index }: { project: CardProject; index: number }) {

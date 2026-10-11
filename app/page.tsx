@@ -6,7 +6,6 @@ import { About } from "@/components/portfolio/about"
 import { Contact } from "@/components/portfolio/contact"
 import { SiteFooter } from "@/components/portfolio/site-footer"
 import { Separator } from "@/components/ui/separator"
-import { Toaster } from "@/components/ui/sonner"
 
 export default function Page() {
   return (
@@ -25,7 +24,6 @@ export default function Page() {
         <Contact />
       </main>
       <SiteFooter />
-      <Toaster />
     </div>
   )
 }

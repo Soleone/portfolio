@@ -6,7 +6,6 @@ export const profile = {
     "Web apps, games and tools for AI coding agents, made with care for the details people feel but rarely notice, and quick to respond the moment you touch them.",
   bio: "Software engineer based in Ottawa, Canada. Nearly 20 years at Shopify taught me how to ship software at scale, from payments to the Shop app, and I led its blockchain team. These days my own time goes to games and the tooling around AI coding agents.",
   location: "Ottawa, Canada",
-  email: "dev@soleone.xyz",
   socials: [
     { label: "GitHub", href: "https://github.com/Soleone" },
     { label: "LinkedIn", href: "https://www.linkedin.com/in/dennis-theisen-8a88a57/" },
