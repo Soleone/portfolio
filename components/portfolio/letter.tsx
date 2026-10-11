@@ -293,6 +293,7 @@ function Sheet({
               readOnly={!live}
               placeholder="Jane Doe"
               autoComplete="name"
+              data-1p-ignore
               required
               className={underline}
             />
@@ -310,6 +311,7 @@ function Sheet({
               readOnly={!live}
               placeholder="jane@example.com"
               autoComplete="email"
+              data-1p-ignore
               required
               className={underline}
             />
