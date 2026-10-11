@@ -44,6 +44,19 @@ folder. Its README lists the files and the setup.
   and its `@import` in `theme.css`.
 - `/lab/themes` is an unlinked playground for the picker.
 
+## Contact form
+
+The letter in the contact section posts to a server action (`app/actions/send-letter.ts`) that emails it
+through [Resend](https://resend.com), with the sender's address as the reply-to. The letter folds while it
+travels and only flies off once Resend accepts it; if sending fails it unfolds again with an error.
+
+- `RESEND_API_KEY` must be set in `.env.local` and in the Vercel project's environment variables.
+- `CONTACT_TO` (default `dev@soleone.xyz`) and `CONTACT_FROM` (default `Portfolio <onboarding@resend.dev>`)
+  are optional. Resend's shared `onboarding@resend.dev` sender only delivers to the Resend account's own
+  address, so either the account is registered to `CONTACT_TO`, or soleone.xyz is verified in Resend and
+  `CONTACT_FROM` uses it.
+- A hidden `website` field catches bots: when it is filled in, the action reports success and sends nothing.
+
 ## Learn More
 
 To learn more, take a look at the following resources:

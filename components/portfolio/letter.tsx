@@ -8,6 +8,7 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { profile } from "@/lib/portfolio"
+import { sendLetter, type SendResult } from "@/app/actions/send-letter"
 import { grain } from "./project-card"
 
 type Draft = { name: string; email: string; message: string }
@@ -45,6 +46,9 @@ export function Letter() {
   const [shape, setShape] = useState<"thirds" | "plane">("thirds")
   const [postedOn, setPostedOn] = useState("")
   const [round, setRound] = useState(0)
+  const [error, setError] = useState<string | null>(null)
+  // Only without motion: there is no fold to watch while the letter is on its way.
+  const [pending, setPending] = useState(false)
   const sheetRef = useRef<HTMLDivElement>(null)
   const messageRef = useRef<HTMLTextAreaElement>(null)
 
@@ -65,9 +69,19 @@ export function Letter() {
 
   async function send(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
+    // Posted right away; the fold plays while it travels and only waits for the answer at the postmark.
+    const posted = sendLetter(new FormData(event.currentTarget)).catch(
+      (): SendResult => ({ ok: false, error: "The letter couldn't be sent. Check your connection and try again." }),
+    )
+    setError(null)
     setPostedOn(new Date().toLocaleDateString("en", { month: "short", day: "numeric" }))
     const sheet = sheetRef.current
-    if (reduced || !sheet) return setPhase("sent")
+    if (reduced || !sheet) {
+      setPending(true)
+      const result = await posted
+      setPending(false)
+      return result.ok ? setPhase("sent") : setError(result.error)
+    }
 
     const height = sheet.offsetHeight
     setFolds([Math.round(height / 3), Math.round((height * 2) / 3), height])
@@ -81,6 +95,9 @@ export function Letter() {
     setShape("plane")
     const corner = { duration: 0.4, ease: easeInOutCubic }
     await Promise.all([animate(topCorner, -180, corner), animate(bottomCorner, 180, { ...corner, delay: 0.16 })])
+
+    const result = await posted
+    if (!result.ok) return returnToSender(result.error)
 
     // The postmark lands with a little press into the desk.
     await Promise.all([
@@ -103,6 +120,17 @@ export function Letter() {
     setPhase("sent")
   }
 
+  // Undoes the folds in reverse, back to the open letter with everything still written on it.
+  async function returnToSender(message: string) {
+    const unfold = { duration: 0.36, ease: easeInOutCubic }
+    await Promise.all([animate(bottomCorner, 0, unfold), animate(topCorner, 0, { ...unfold, delay: 0.12 })])
+    setShape("thirds")
+    await Promise.all([animate(topFold, 0, unfold), animate(bottomFold, 0, { ...unfold, delay: 0.22 })])
+    setFolds(null)
+    setPhase("writing")
+    setError(message)
+  }
+
   function writeAnother() {
     for (const value of [bottomFold, topFold, topCorner, bottomCorner, postmark, x, y, rotate]) value.jump(0)
     scale.jump(1)
@@ -121,6 +149,8 @@ export function Letter() {
       onChange={live ? edit : undefined}
       messageRef={live ? messageRef : undefined}
       sheetRef={live ? sheetRef : undefined}
+      error={live ? error : null}
+      pending={live && pending}
     />
   )
 
@@ -140,6 +170,10 @@ export function Letter() {
         transition={{ duration: 0.6, ease: easeOutQuint }}
       >
         {sheet(true)}
+        {/* For bots only: people never see it, so anything in it means the letter is not from one. */}
+        <div aria-hidden className="absolute -left-[9999px] size-px overflow-hidden">
+          <input name="website" tabIndex={-1} autoComplete="off" />
+        </div>
       </motion.form>
 
       {phase === "sending" && folds && (
@@ -200,9 +234,13 @@ function Sheet({
   onChange,
   messageRef,
   sheetRef,
+  error,
+  pending,
 }: {
   draft: Draft
   live: boolean
+  error: string | null
+  pending: boolean
   onChange?: (field: keyof Draft) => (event: { target: { value: string } }) => void
   messageRef?: React.Ref<HTMLTextAreaElement>
   sheetRef?: React.Ref<HTMLDivElement>
@@ -269,10 +307,17 @@ function Sheet({
             />
           </Field>
         </div>
-        <Button type={live ? "submit" : "button"} className="self-end">
-          Send letter
-          <Send data-icon="inline-end" />
-        </Button>
+        <div className="flex items-center justify-end gap-4">
+          {error && (
+            <p role="alert" className="mr-auto text-sm text-pretty text-destructive">
+              {error}
+            </p>
+          )}
+          <Button type={live ? "submit" : "button"} disabled={pending} className="shrink-0">
+            {pending ? "Sending..." : "Send letter"}
+            <Send data-icon="inline-end" />
+          </Button>
+        </div>
       </FieldGroup>
     </div>
   )
