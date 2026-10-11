@@ -220,8 +220,10 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
         onPointerCancel={onLeave}
         onClick={onClick}
       >
+        {/* Scaling during a flip or press makes Chrome re-raster every layer of the card each frame. On touch
+            screens the hint pins the raster scale instead; on desktop it would soften the hover scale. */}
         <motion.div
-          className="relative transform-3d"
+          className="relative transform-3d pointer-coarse:will-change-transform"
           style={{ rotateX: rx, rotateY, scale }}
         >
           {/* Front */}
