@@ -66,7 +66,7 @@
     },
     {
       "id": "local:products/vibestep",
-      "priority": null,
+      "priority": "high",
       "title": "Vibestep",
       "pitch": "Build rhythm game maps in your browser and play them right away.",
       "description": "Import a song, find its BPM, then record notes live or edit them on the timeline. Everything stays in your browser, and a built-in CC0 song lets you play with no account or install.",
@@ -101,7 +101,7 @@
         "capture": "npm run media:capture"
       },
       "tier": "S",
-      "target": null,
+      "target": "S",
       "gap": [],
       "source": "showcase.json"
     },
@@ -216,7 +216,7 @@
     },
     {
       "id": "local:products/podcaster",
-      "priority": null,
+      "priority": "high",
       "title": "Podcaster",
       "pitch": "Talk to a podcast companion with your microphone and hear it answer out loud.",
       "description": "Speech recognition and voice synthesis run on your machine, while replies come from your Pi agent. Interrupt it mid-answer, pick a voice and persona, and export the transcript.",
@@ -256,8 +256,10 @@
         "capture": "npm run media:capture"
       },
       "tier": "A",
-      "target": null,
-      "gap": [],
+      "target": "S",
+      "gap": [
+        "live"
+      ],
       "source": "showcase.json"
     },
     {
@@ -392,7 +394,7 @@
     },
     {
       "id": "local:products/better-youtube",
-      "priority": null,
+      "priority": "high",
       "title": "Better Youtube",
       "pitch": "Add any YouTube video to your favorite playlists in one click, straight from Home or Subscriptions.",
       "description": "Every add turns into an Undo button, a Playlists entry in the sidebar jumps to your favorites, and playlist pages get a Remove button. A bundled demo runs without a YouTube account.",
@@ -432,7 +434,7 @@
         "capture": "npm run media:capture"
       },
       "tier": "A",
-      "target": null,
+      "target": "A",
       "gap": [],
       "source": "showcase.json"
     },

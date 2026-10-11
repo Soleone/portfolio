@@ -64,7 +64,7 @@ export function feedToProject(entry: FeedProject): Project {
 }
 
 // Curated projects keep their copy and get media and a live link from the feed (matched by repo), unless the
-// project's own showcase.json supplies the copy.
+// project's own showcase.json supplies the copy. A priority set in the portfolio registry wins over the curated one.
 // Feed projects with a priority that the curated list lacks are appended.
 export function withShowcase(projects: Project[], { projects: entries }: ShowcaseFeed = feed): Project[] {
   const byRepo = new Map(entries.filter((entry) => entry.repo).map((entry) => [repoKey(entry.repo), entry]))
@@ -81,6 +81,7 @@ export function withShowcase(projects: Project[], { projects: entries }: Showcas
       details: own ? details : (project.details ?? details),
       image: project.image ?? image,
       live: project.live ?? live,
+      priority: entry.priority ?? project.priority,
       showcaseTier: entry.tier,
     }
   })
