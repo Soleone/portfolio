@@ -575,52 +575,6 @@
       "source": null
     },
     {
-      "id": "local:tries/2026-08-06-podcaster",
-      "priority": null,
-      "title": "Podcaster",
-      "pitch": "Talk to a podcast companion with your microphone and hear it answer out loud.",
-      "description": "Speech recognition and voice synthesis run on your machine, while replies come from your Pi agent. Interrupt it mid-answer, pick a voice and persona, and export the transcript.",
-      "kind": "local-web-app",
-      "stage": "proof of concept",
-      "year": 2026,
-      "repo": "https://github.com/Soleone/2026-08-06-podcaster",
-      "demo": {
-        "local": "npm run demo",
-        "externals": [
-          {
-            "name": "Local speech models (recognition and voice)",
-            "type": "model",
-            "seam": "PODCASTER_WEB_BUILD_ENTRY selects the fake-services web build, which swaps the session transport for a canned one",
-            "standIn": "canned",
-            "note": "Nothing you say is transcribed. The replies are fixed text and are not spoken by a voice model."
-          },
-          {
-            "name": "Pi agent (the reply model)",
-            "type": "service",
-            "seam": "The same fake-services build: replies come from the page, not from a Pi process",
-            "standIn": "canned",
-            "note": "Replies are canned. No model provider or Pi account is used."
-          },
-          {
-            "name": "Microphone",
-            "type": "hardware",
-            "seam": "The page asks the browser for the microphone as usual; the demo build keeps the audio in the page",
-            "standIn": "simulated",
-            "note": "Your microphone opens and the level shows, but the audio stays in the page and is never sent anywhere."
-          }
-        ]
-      },
-      "media": {
-        "hero": "media/tries-2026-08-06-podcaster/hero.png",
-        "motion": "media/tries-2026-08-06-podcaster/motion.webp",
-        "capture": "npm run media:capture"
-      },
-      "tier": "A",
-      "target": null,
-      "gap": [],
-      "source": "showcase.json"
-    },
-    {
       "id": "github:Soleone/UnrealEngine",
       "priority": null,
       "title": "UnrealEngine",
