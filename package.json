@@ -11,7 +11,7 @@
     "lint": "eslint",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "showcase": "node ../../products/showcase/bin/showcase.js collect ../portfolio-review/portfolio.config.json --out public/showcase"
+    "showcase": "showcase collect --out public/showcase"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
