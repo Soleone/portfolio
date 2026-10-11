@@ -8,7 +8,7 @@ export type ShowcaseTier = "D" | "C" | "B" | "A" | "S"
 export type FeedProject = {
   id: string
   priority: ProjectPriority | null
-  type: string | null
+  stage: string | null
   title: string
   pitch?: string
   description?: string
@@ -55,7 +55,7 @@ export function feedToProject(entry: FeedProject): Project {
     details: entry.description,
     year: entry.year ? String(entry.year) : "",
     priority: entry.priority ?? "low",
-    type: entry.type ?? entry.kind ?? "",
+    type: entry.stage ?? entry.kind ?? "",
     tech: entry.tech ?? [],
     href: entry.repo ?? entry.live ?? "#",
     image: mediaUrl(entry.media?.motion ?? entry.media?.hero),
