@@ -3,10 +3,10 @@
  * compared against it. These are the tokens that used to live in :root and .dark, unchanged,
  * and they follow the OS appearance (the theme provider toggles .dark for system themes).
  *
- * Delete this file, its @import in globals.css, and SHOWCASE_THEME in lib/themes/builtin.ts
+ * Delete this file, its @import in theme.css, and SHOWCASE_THEME in builtin.ts
  * to retire it.
  */
-:root[data-theme="showcase"] {
+[data-theme="showcase"] {
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.141 0.005 285.823);
   --popover: oklch(1 0 0);
@@ -50,7 +50,7 @@
   --tint-8: oklch(0.75 0.12 120);
 }
 
-:root[data-theme="showcase"].dark {
+[data-theme="showcase"].dark {
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.21 0.006 285.885);

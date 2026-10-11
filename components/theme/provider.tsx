@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import type { ThemeMode, ThemeOption } from "@/lib/themes/palette"
+import { HOTKEY_FALLBACKS } from "./config"
+import type { ThemeMode, ThemeOption } from "./palette"
 
 type ThemeContextValue = {
   /** Active theme name; undefined until the client has read the page, so the server renders no guess. */
@@ -112,9 +113,9 @@ function useTheme() {
 
 // D flips between dark and light. Each side remembers the theme last used there, so a visitor
 // who picked Nord and pressed D twice lands back on Nord; the first flip from a side they never
-// chose goes to the fallbacks below.
-const FALLBACKS = { dark: "gilt", light: "flexoki-light" }
+// chose goes to the fallbacks in config.ts.
 
+/** Whether a keystroke belongs to what the visitor is typing in, so single-key shortcuts leave it alone. */
 function isInteractiveTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
     return false
@@ -125,8 +126,8 @@ function isInteractiveTarget(target: EventTarget | null) {
     target.tagName === "INPUT" ||
     target.tagName === "TEXTAREA" ||
     target.tagName === "SELECT" ||
-    // An open theme picker is a listbox; typing in it is type-ahead, not a shortcut.
-    target.closest('[role="listbox"], [role="combobox"]') !== null
+    // An open theme picker is a listbox or a dialog; keys there are its own, not shortcuts.
+    target.closest('[role="listbox"], [role="combobox"], [role="dialog"]') !== null
   )
 }
 
@@ -148,7 +149,7 @@ function ThemeHotkey() {
       if (isInteractiveTarget(event.target)) return
 
       const other = resolvedMode === "dark" ? "light" : "dark"
-      const target = remembered.current[other] ?? FALLBACKS[other]
+      const target = remembered.current[other] ?? HOTKEY_FALLBACKS[other]
       if (themes.some((candidate) => candidate.name === target)) setTheme(target)
     }
 
@@ -159,4 +160,4 @@ function ThemeHotkey() {
   return null
 }
 
-export { ThemeProvider, useTheme }
+export { ThemeProvider, useTheme, isInteractiveTarget }

@@ -26,21 +26,23 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 ## Theming
 
-The header has a theme picker (a shadcn `Select`). Themes are palettes in the same omarchy
-`colors.toml` format as the tasks app, so a palette can be pasted in from there. The default is
-Gilt, and the choice is remembered in `localStorage` (`portfolio.theme`).
+The header has a theme picker: the palette button (or `T`) opens a ring of preview cards, each drawn
+in its own theme. Drag, scroll or use the arrows to browse, type to filter, and click the front card or
+press Enter to switch; the new theme spreads over the page from the card. Themes are palettes in the
+same omarchy `colors.toml` format as the tasks app, so a palette can be pasted in from there. The
+default is Gilt, and the choice is remembered in `localStorage` (`portfolio.theme`). Press `D` to flip
+between dark and light.
 
-- `lib/themes/builtin.ts` holds the palettes. Add a theme by pasting one in.
-- `lib/themes/palette.ts` parses them and derives the slots a palette leaves out.
-- The root layout inlines one `:root[data-theme="..."]` block per theme plus a tiny script that applies
-  the stored choice before first paint, so there is no flash.
-- `app/globals.css` maps the palette slots (`--om-*`) onto the shadcn tokens. Components only use the
-  tokens, so keep colors out of components (project card tints come from `--tint-1..8`).
+Everything theme-related lives in `components/theme/`, so it can move to another project as one
+folder. Its README lists the files and the setup.
+
+- `components/theme/builtin.ts` holds the palettes. Add a theme by pasting one in.
+- `components/theme/theme.css` maps the palette slots (`--om-*`) onto the shadcn tokens. Components
+  only use the tokens, so keep colors out of components (project card tints come from `--tint-1..8`).
 - `showcase` is the original design (zinc and pink, follows the OS appearance), kept for comparison.
-  To retire it, delete `SHOWCASE_THEME` in `lib/themes/builtin.ts`, `app/showcase-theme.css` and its
-  `@import` in `globals.css`.
-
-Press `D` to flip between dark and light.
+  To retire it, delete `SHOWCASE_THEME` in `components/theme/builtin.ts`, `components/theme/showcase.css`
+  and its `@import` in `theme.css`.
+- `/lab/themes` is an unlinked playground for the picker.
 
 ## Learn More
 

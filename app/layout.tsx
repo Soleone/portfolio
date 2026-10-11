@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/theme";
 import { cn } from "@/lib/utils";
 import {
   DEFAULT_THEME,
@@ -10,7 +10,7 @@ import {
   themeOptions,
   themeScript,
   themeStyles,
-} from "@/lib/themes";
+} from "@/components/theme/registry";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 

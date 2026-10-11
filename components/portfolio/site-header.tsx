@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { profile } from "@/lib/portfolio"
-import { ThemePicker } from "./theme-picker"
+import { ThemePicker } from "@/components/theme"
 import { Menu } from "lucide-react"
 
 const navItems = [

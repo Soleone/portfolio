@@ -5,7 +5,7 @@
  * names and the same derivation rules, so a palette file from there is a valid theme here.
  * Pure module: no DOM, so the server can build CSS from it.
  *
- * Two names collide with shadcn and are mapped deliberately in globals.css: omarchy `accent`
+ * Two names collide with shadcn and are mapped deliberately in theme.css: omarchy `accent`
  * is the brand color (our `--primary` and focus ring), while shadcn `--accent` is a quiet
  * hover surface and takes omarchy `selection`.
  */

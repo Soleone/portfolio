@@ -5,12 +5,12 @@
  * client gets plain `ThemeOption`s as props, so the TOML never ships to the browser.
  */
 import { BUILTIN_THEMES, SHOWCASE_THEME } from "./builtin";
+import { DEFAULT_THEME, THEME_STORAGE_KEY } from "./config";
 import { parseThemeFile, type ThemeOption, type ThemePalette } from "./palette";
 
-export const DEFAULT_THEME = "gilt";
-export const THEME_STORAGE_KEY = "portfolio.theme";
+export { DEFAULT_THEME, THEME_STORAGE_KEY };
 
-/** Palette slots exposed to CSS as `--om-*`, the ones globals.css maps onto shadcn tokens. */
+/** Palette slots exposed to CSS as `--om-*`, the ones theme.css maps onto shadcn tokens. */
 const PALETTE_SLOTS = [
   "accent",
   "on_accent",
@@ -65,12 +65,12 @@ const declarations = (palette: ThemePalette): string =>
 /** A theme with no palette (showcase) styles itself from hand-written CSS instead. */
 export const themeStyles = records
   .filter(({ palette }) => Object.keys(palette).length > 0)
-  .map(({ name, palette }) => `:root[data-theme="${name}"]{${declarations(palette)}}`)
+  .map(({ name, palette }) => `[data-theme="${name}"]{${declarations(palette)}}`)
   .join("\n");
 
 export const defaultThemeIsDark = records.find((theme) => theme.name === DEFAULT_THEME)?.mode === "dark";
 
 const modes = Object.fromEntries(records.map(({ name, mode }) => [name, mode]));
 
-/** Runs in <head> before paint. Mirrors `apply` in components/theme-provider.tsx. */
+/** Runs in <head> before paint. Mirrors `setTheme` in provider.tsx. */
 export const themeScript = `(function(){try{var m=${JSON.stringify(modes)},r=document.documentElement,t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});if(!Object.hasOwn(m,t))t=${JSON.stringify(DEFAULT_THEME)};r.dataset.theme=t;r.classList.toggle("dark",m[t]==="dark"||(m[t]==="system"&&matchMedia("(prefers-color-scheme: dark)").matches))}catch(e){}})()`;

@@ -649,9 +649,9 @@ magenta = "#2e2e2e"`,
 /**
  * The site's original design (zinc surfaces, pink primary) kept as a theme while the palette
  * themes are compared against it. It has no palette: its tokens are hand-written in
- * app/showcase-theme.css and it follows the OS appearance like the site used to.
+ * showcase.css and it follows the OS appearance like the site used to.
  *
- * To retire it, delete this record, app/showcase-theme.css and its @import in globals.css.
+ * To retire it, delete this record, showcase.css and its @import in theme.css.
  */
 export const SHOWCASE_THEME: ThemeOption & { palette: ThemePalette } = {
   name: "showcase",
