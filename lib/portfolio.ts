@@ -1,9 +1,9 @@
 export const profile = {
   name: "Soleone",
   role: "Full-Stack Web Developer",
-  tagline: "Fast, joyful products with taste.",
+  tagline: "Products that feel good to use.",
   intro:
-    "Web apps, games and tools for AI coding agents, made with care for the details people feel but rarely notice, and quick to respond the moment you touch them.",
+    "Intuitive, fast to load, instant to respond, and a little fun along the way. Apps, games and tooling interwoven with AI agents.",
   bio: "Software engineer based in Ottawa, Canada. Nearly 20 years at Shopify taught me how to ship software at scale, from payments to the Shop app, and I led its blockchain team. These days my own time goes to games and the tooling around AI coding agents.",
   location: "Ottawa, Canada",
   socials: [
