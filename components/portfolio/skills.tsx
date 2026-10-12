@@ -1,4 +1,4 @@
-import { skillGroups } from "@/lib/portfolio"
+import { skillsData } from "@/lib/skill-graph"
 import { SectionHeading } from "./section-heading"
 import { SkillGraph } from "./skill-graph"
 
@@ -9,9 +9,13 @@ export function Skills() {
 
       {/* The graph is drawn for the eye; this is the same list for readers and crawlers. */}
       <ul className="sr-only">
-        {skillGroups.map((group) => (
-          <li key={group.label}>
-            {group.label}: {group.items.join(", ")}
+        {skillsData.groups.map((group) => (
+          <li key={group.id}>
+            {group.label}:{" "}
+            {skillsData.skills
+              .filter((skill) => skill.group === group.id)
+              .map((skill) => skill.label)
+              .join(", ")}
           </li>
         ))}
       </ul>

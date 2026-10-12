@@ -235,14 +235,6 @@ export const projects: Project[] = [
   },
 ]
 
-export const skillGroups: { label: string; items: string[] }[] = [
-  { label: "Languages", items: ["Ruby", "TypeScript", "JavaScript", "Java", "C++", "SQL"] },
-  { label: "Frameworks", items: ["Rails", "React", "Next.js", "Vue", "Remix", "Node.js", "Three.js", "Unreal Engine"] },
-  { label: "Styling", items: ["Tailwind CSS", "CSS", "Framer Motion", "shadcn/ui"] },
-  { label: "Tooling", items: ["Git", "Unix", "Vercel", "Docker", "Playwright"] },
-  { label: "AI tooling", items: ["Pi agent", "Claude", "Cursor"] },
-]
-
 export const values: { label: string; description: string }[] = [
   {
     label: "Taste",
