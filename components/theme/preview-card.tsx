@@ -3,7 +3,7 @@
 import { useSyncExternalStore, type CSSProperties, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import type { ThemeMode, ThemeOption } from "./palette"
-import { grain } from "./sheen"
+import { grain } from "@/components/soleone/sheen"
 
 const darkQuery = () => window.matchMedia("(prefers-color-scheme: dark)")
 const subscribeSystem = (listener: () => void) => {

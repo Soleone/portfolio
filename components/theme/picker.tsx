@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils"
 import type { ThemeOption } from "./palette"
 import { ThemePreviewCard } from "./preview-card"
 import { isInteractiveTarget, useTheme } from "./provider"
-import { Sheen } from "./sheen"
+import { Sheen } from "@/components/soleone/sheen"
 
 // The ring. Cards stand on a cylinder seen from outside: the front card faces the viewer and its
 // neighbours turn away as they curve back. Spacing is the arc between card centers at the front;

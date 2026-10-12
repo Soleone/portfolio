@@ -3,8 +3,7 @@
 import { motion, type MotionValue } from "motion/react"
 import type { CSSProperties } from "react"
 
-// The card's material, the same as the portfolio's project cards (components/portfolio/project-card.tsx),
-// copied here so the theme folder stands on its own.
+// A card's material: grain on the surface, and the glare and rim light that follow the pointer.
 
 // SVG grain makes the surface read as a material instead of a flat fill.
 export const grain =

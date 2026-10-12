@@ -17,14 +17,14 @@ this folder so it can be copied into another project.
 - `provider.tsx`: `ThemeProvider`, `useTheme` and the D hotkey (flip dark and light).
 - `picker.tsx`: `ThemePicker`, the palette button and the 3D card ring it opens (T opens it from anywhere).
 - `preview-card.tsx`: a card that draws one theme in its own tokens, whatever the page is in.
-- `sheen.tsx`: the glare and rim light on the cards, and the grain texture.
 - `index.ts`: client exports. Server code imports `./registry` directly.
 
 ## Moving it to another project
 
 It expects Next (App Router), React 19, Tailwind v4 with shadcn's tokens, and these packages:
 `@base-ui/react`, `motion`, `lucide-react`. Outside this folder it uses shadcn's `Button` and `Kbd`
-(`@/components/ui`) and `cn` (`@/lib/utils`).
+(`@/components/ui`), `cn` (`@/lib/utils`) and the card material from the soleone registry
+(`pnpm dlx shadcn add @soleone/material`, installed at `components/soleone/sheen.tsx`).
 
 1. Copy the folder and set `config.ts`.
 2. In the global CSS, `@import` `theme.css` after Tailwind, and keep shadcn's `@theme inline` block and
