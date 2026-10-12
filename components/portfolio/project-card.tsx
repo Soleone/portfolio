@@ -10,9 +10,10 @@ import {
   type MotionValue,
 } from "motion/react"
 import { ArrowUpRight, Play, RotateCcw } from "lucide-react"
-import { useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react"
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react"
 import type { ProjectMedia } from "@/lib/showcase"
 import { useTuning } from "./card-tuning"
+import { collectCoin } from "./coins"
 import { GithubIcon } from "./github-icon"
 import { springEasing } from "./spring-easing"
 
@@ -43,6 +44,11 @@ const stagePills: Record<string, string> = {
 const spring = (stiffness: number, damping: number) => ({ type: "spring" as const, stiffness, damping })
 const easeOutQuint = [0.22, 1, 0.36, 1] as const
 
+// Which cards show their back, and how to cheer each one, by grid index. Shared so a flip can tell
+// when it completed a row: a full row of backs on a grid three or more wide gets a quick wave.
+const backs = new Set<number>()
+const cheers = new Map<number, (delay: number) => void>()
+
 // Deterministic so server and client agree; a dealt hand never lands perfectly square.
 const dealAngle = (index: number) => ((index * 37) % 17) - 8
 
@@ -66,6 +72,9 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
   // A touch has no hover: a sideways drag tilts the card instead (up and down still scroll the page).
   const touch = useRef({ x: 0, y: 0, tilting: false })
   const [turns, setTurns] = useState(0)
+  // Four flips in quick succession earn a bonus spin; each one adds a full turn on top of the flips.
+  const flips = useRef<number[]>([])
+  const bonusSpins = useRef(0)
 
   // Pointer position on the card, 0..1. Springs keep the glare from snapping when the pointer jumps.
   const px = useMotionValue(0.5)
@@ -74,6 +83,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
   const lift = useMotionValue(0)
   const shine = useMotionValue(0)
   const flip = useMotionValue(0)
+  const hop = useMotionValue(0)
 
   const tiltMax = reduced ? 0 : t.tiltMax
 
@@ -103,7 +113,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
   const rimOpacity = useTransform(shine, [0, 1], [0.25, 1])
   const sheen = { glareX, glareY, rimAngle, shine, rimOpacity, glare: t.glare, rim: t.rim, rimWidth: t.rimWidth }
 
-  // Clicking the GitHub link collects it like a coin: it hops up while spinning once. The spin is a squash
+  // Clicking the GitHub button collects it like a coin: the whole button hops up while spinning once. The spin is a squash
   // on X, not a rotateY, so the card's backface-hidden layers never blank it out halfway through a turn.
   const coinSpin = useMotionValue(0)
   const coinY = useMotionValue(0)
@@ -171,6 +181,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
   }
 
   const collect = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    collectCoin()
     if (reduced) return
     coinSpin.set(0)
     animate(coinSpin, 360, { duration: 0.45, ease: "easeOut" })
@@ -184,10 +195,52 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
   }
 
   const turn = () => {
+    const now = performance.now()
+    flips.current = [...flips.current.filter((at) => now - at < 2000), now]
+    if (flips.current.length >= 4) {
+      flips.current = []
+      bonusSpins.current += 1
+    }
     const next = turns + 1
     setTurns(next)
-    animate(flip, next * 180, reduced ? { duration: 0 } : spring(t.flipStiffness, t.flipDamping))
+    animate(flip, next * 180 + bonusSpins.current * 360, reduced ? { duration: 0 } : spring(t.flipStiffness, t.flipDamping))
+
+    if (next % 2 === 0) {
+      backs.delete(index)
+      return
+    }
+    backs.add(index)
+    const grid = dealRef.current?.parentElement
+    const columns = grid ? getComputedStyle(grid).gridTemplateColumns.split(" ").length : 1
+    if (reduced || columns < 3) return
+    const start = index - (index % columns)
+    const row = Array.from({ length: columns }, (_, i) => start + i)
+    // Starts once the last card has mostly turned, then rolls across the row.
+    if (row.every((i) => backs.has(i))) row.forEach((i, order) => cheers.get(i)?.(0.25 + order * 0.07))
   }
+
+  useEffect(() => {
+    cheers.set(index, (delay) => {
+      animate(hop, [0, -16, 0], { duration: 0.4, delay, times: [0, 0.35, 1], ease: ["easeOut", "easeIn"] })
+      animate(shine, [shine.get(), 1, hovered.current ? 1 : 0], { duration: 0.5, delay })
+    })
+    return () => {
+      cheers.delete(index)
+      backs.delete(index)
+    }
+  }, [index, hop, shine])
+
+  // The flip button's arrow turns half a turn counterclockwise with every flip, so each face always shows it the same way.
+  // It waits until the incoming face is turned toward the viewer, or the turn would finish out of sight.
+  const ratchet = (
+    <motion.span
+      className="block"
+      animate={{ rotate: turns * -180 }}
+      transition={reduced ? { duration: 0 } : { ...spring(400, 22), delay: 0.2 }}
+    >
+      <RotateCcw className="size-4" />
+    </motion.span>
+  )
 
   const onClick = (event: React.MouseEvent) => {
     if (!t.flip || touch.current.tilting || (event.target as HTMLElement).closest("a, button")) return
@@ -257,7 +310,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
             screens the hint pins the raster scale instead; on desktop it would soften the hover scale. */}
         <motion.div
           className="relative transform-3d pointer-coarse:will-change-transform"
-          style={{ rotateX: rx, rotateY, scale }}
+          style={{ y: hop, rotateX: rx, rotateY, scale }}
         >
           {/* Front */}
           <Face className="relative" style={surface} hidden={showingBack}>
@@ -306,18 +359,17 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
                   Try it
                 </a>
               )}
-              <a
+              <motion.a
                 href={project.repo}
                 target="_blank"
                 rel="noreferrer"
                 aria-label={`${project.title} source code`}
                 onClick={collect}
+                style={{ scaleX: coinScaleX, y: coinY }}
                 className="grid size-8 place-items-center rounded-full bg-foreground/[0.06] transition-colors hover:bg-foreground/10"
               >
-                <motion.span className="block" style={{ scaleX: coinScaleX, y: coinY }}>
-                  <GithubIcon className="size-4" />
-                </motion.span>
-              </a>
+                <GithubIcon className="size-4" />
+              </motion.a>
               {t.flip && (
                 <button
                   type="button"
@@ -325,7 +377,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
                   aria-label="Show details"
                   className="ml-auto grid size-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
                 >
-                  <RotateCcw className="size-4" />
+                  {ratchet}
                 </button>
               )}
             </div>
@@ -388,7 +440,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
                 aria-label="Show front"
                 className="ml-auto grid size-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
               >
-                <RotateCcw className="size-4" />
+                {ratchet}
               </button>
             </div>
             <Sheen {...sheen} />

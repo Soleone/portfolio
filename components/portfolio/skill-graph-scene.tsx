@@ -88,6 +88,38 @@ function curvePoint(a: THREE.Vector3, b: THREE.Vector3, t: number, out: THREE.Ve
 }
 const scratch = { mid: new THREE.Vector3(), bend: new THREE.Vector3(), point: new THREE.Vector3(), color: new THREE.Color() }
 
+// A node popped by four quick clicks: it swells and bursts like a bubble, a ring and droplets fly off it,
+// and the blast throws its neighbours outward with a shake before the layout pulls them back.
+type Pop = { index: number; at: number; burst: boolean }
+const POP = { swell: 0.12, gone: 0.45, back: 0.8, wave: 0.5, recover: 1.8 } // seconds
+const DROPLETS = 10
+
+// The popped node's size over time: swells, bursts, stays gone a moment, then grows back with a little overshoot.
+function bubble(t: number) {
+  if (t < 0 || t >= POP.back) return 1
+  if (t < POP.swell) return 1 + 0.8 * Math.sin(((t / POP.swell) * Math.PI) / 2)
+  if (t < POP.gone) return 0.001
+  const u = (t - POP.gone) / (POP.back - POP.gone) - 1
+  return 1 + 2.70158 * u ** 3 + 1.70158 * u ** 2
+}
+
+let ringTexture: THREE.Texture | undefined
+function ring() {
+  if (ringTexture) return ringTexture
+  const canvas = document.createElement("canvas")
+  canvas.width = canvas.height = 128
+  const context = canvas.getContext("2d")!
+  context.strokeStyle = "white"
+  context.shadowColor = "white"
+  context.shadowBlur = 10
+  context.lineWidth = 6
+  context.beginPath()
+  context.arc(64, 64, 50, 0, Math.PI * 2)
+  context.stroke()
+  ringTexture = new THREE.CanvasTexture(canvas)
+  return ringTexture
+}
+
 let glowTexture: THREE.Texture | undefined
 function glow() {
   if (glowTexture) return glowTexture
@@ -110,6 +142,18 @@ export default function SkillGraphScene(props: SceneProps) {
   const emphasis = useMemo(() => emphasisFor(graph, { focus, hover, highlight }), [graph, focus, hover, highlight])
   const labels = useRef<(HTMLButtonElement | null)[]>([])
 
+  // Four quick clicks on the same node pop the graph: its neighbours fly apart and snap back into place.
+  const clicks = useRef({ id: "", count: 0, at: 0 })
+  const popped = useRef<string | null>(null)
+  const select = (id: string) => {
+    const now = performance.now()
+    const run = clicks.current
+    run.count = run.id === id && now - run.at < 450 ? run.count + 1 : 1
+    Object.assign(run, { id, at: now })
+    if (run.count === 4 && !props.reducedMotion) popped.current = id
+    props.onSelect(id)
+  }
+
   return (
     <div className="relative size-full">
       <Canvas
@@ -121,7 +165,7 @@ export default function SkillGraphScene(props: SceneProps) {
         onPointerMissed={props.onClear}
         className="touch-pan-y"
       >
-        <Graph {...props} topology={topology} emphasis={emphasis} labels={labels} />
+        <Graph {...props} onSelect={select} popped={popped} topology={topology} emphasis={emphasis} labels={labels} />
       </Canvas>
       {/* Labels are plain DOM over the canvas, placed each frame, so they use the page's type and tokens. */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -133,7 +177,7 @@ export default function SkillGraphScene(props: SceneProps) {
             }}
             type="button"
             tabIndex={-1}
-            onClick={() => props.onSelect(node.id)}
+            onClick={() => select(node.id)}
             onPointerEnter={() => props.onHover(node.id)}
             onPointerLeave={() => props.onHover(null)}
             className={cn(
@@ -159,9 +203,10 @@ type GraphProps = SceneProps & {
   topology: Topology
   emphasis: ReturnType<typeof emphasisFor>
   labels: RefObject<(HTMLButtonElement | null)[]>
+  popped: RefObject<string | null>
 }
 
-function Graph({ graph, arrangement, focus, hover, highlight, colors, reducedMotion, onSelect, onHover, topology, emphasis, labels }: GraphProps) {
+function Graph({ graph, arrangement, focus, hover, highlight, colors, reducedMotion, onSelect, onHover, topology, emphasis, labels, popped }: GraphProps) {
   const target = layoutFor(graph, arrangement)
   // Where each node is drawn this frame. Positions outlive a change to the graph, so nodes travel from
   // wherever they were to where they now belong, and a new node starts where it will settle.
@@ -183,8 +228,42 @@ function Graph({ graph, arrangement, focus, hover, highlight, colors, reducedMot
     return node.kind === "project" ? colors.project : (colors.fields[node.fields[0] ?? 0] ?? colors.edge)
   }
 
-  useFrame((_, delta) => {
-    const step = reducedMotion ? 1 : ease(2.4, delta)
+  const pop = useRef<Pop>({ index: -1, at: -Infinity, burst: true })
+  const velocity = useMemo(() => topology.nodes.map(() => new THREE.Vector3()), [topology])
+  // Seconds left until the graph is back to its usual pace after a blast.
+  const recovering = useRef(0)
+
+  useFrame((state, delta) => {
+    const now = state.clock.elapsedTime
+    const clicked = popped.current === null ? undefined : topology.index.get(popped.current)
+    popped.current = null
+    if (clicked !== undefined) pop.current = { index: clicked, at: now, burst: false }
+
+    // The blast goes off as the bubble bursts: away from it, scattered a little, nearer nodes the hardest.
+    const { index, at, burst } = pop.current
+    if (!burst && now - at >= POP.swell && positions[index]) {
+      pop.current.burst = true
+      positions.forEach((position, i) => {
+        if (i === index) return
+        const away = scratch.point.subVectors(position, positions[index])
+        const distance = away.length()
+        away.normalize().add(scratch.bend.randomDirection().multiplyScalar(0.6)).normalize()
+        velocity[i].copy(away).multiplyScalar((28 / (1 + distance * 0.35)) * (0.7 + Math.random() * 0.6))
+      })
+      recovering.current = POP.recover
+    }
+
+    recovering.current = Math.max(0, recovering.current - delta)
+    const drag = Math.exp(-6 * delta)
+    // The flung nodes shake for the first half second, less and less.
+    const shake = Math.max(0, recovering.current - (POP.recover - 0.5)) * 0.15
+    positions.forEach((position, i) => {
+      position.addScaledVector(velocity[i], delta)
+      velocity[i].multiplyScalar(drag)
+      if (shake > 0 && i !== index) position.add(scratch.bend.randomDirection().multiplyScalar(shake * Math.random()))
+    })
+
+    const step = reducedMotion ? 1 : ease(recovering.current > 0 ? 2 : 2.4, delta)
     topology.nodes.forEach((node, i) => positions[i].lerp(scratch.point.set(...((target.get(node.id) ?? [0, 0, 0]) as Vec3)), step))
   })
 
@@ -195,6 +274,8 @@ function Graph({ graph, arrangement, focus, hover, highlight, colors, reducedMot
       {topology.nodes.map((node, i) => (
         <NodeMark
           key={node.id}
+          index={i}
+          pop={pop}
           node={node}
           position={positions[i]}
           radius={topology.radius[i]}
@@ -204,6 +285,7 @@ function Graph({ graph, arrangement, focus, hover, highlight, colors, reducedMot
           onHover={onHover}
         />
       ))}
+      <Burst pop={pop} positions={positions} radius={topology.radius} colorOf={colorOf} />
       <Rig topology={topology} positions={positions} focus={focus} highlight={highlight} hover={hover} reducedMotion={reducedMotion} />
       {/* After the rig, so labels are placed for the camera this frame is drawn from. */}
       <LabelTracker topology={topology} positions={positions} emphasis={emphasis.node} labels={labels} />
@@ -260,6 +342,8 @@ function LabelTracker({
 }
 
 function NodeMark({
+  index,
+  pop,
   node,
   position,
   radius,
@@ -268,6 +352,8 @@ function NodeMark({
   onSelect,
   onHover,
 }: {
+  index: number
+  pop: RefObject<Pop>
   node: SkillNode
   position: THREE.Vector3
   radius: number
@@ -277,6 +363,8 @@ function NodeMark({
   onHover: (id: string | null) => void
 }) {
   const group = useRef<THREE.Group>(null)
+  // The size it eases toward from its emphasis; a pop plays on top of it.
+  const size = useRef(1)
   const core = useRef<THREE.MeshBasicMaterial>(null)
   const halo = useRef<THREE.SpriteMaterial>(null)
   const spin = useRef<THREE.Mesh>(null)
@@ -286,7 +374,9 @@ function NodeMark({
     group.current.position.copy(position)
     const step = ease(8, delta)
     const scale = emphasis === "focus" ? (node.kind === "field" ? 1.2 : 1.5) : emphasis === "near" ? 1.15 : 1
-    group.current.scale.setScalar(THREE.MathUtils.lerp(group.current.scale.x, scale, step))
+    size.current = THREE.MathUtils.lerp(size.current, scale, step)
+    const popping = pop.current.index === index ? bubble(state.clock.elapsedTime - pop.current.at) : 1
+    group.current.scale.setScalar(size.current * popping)
     core.current.opacity = THREE.MathUtils.lerp(core.current.opacity, nodeOpacity[emphasis], step)
     // The focused node breathes.
     const breath = emphasis === "focus" ? 0.55 + Math.sin(state.clock.elapsedTime * 3) * 0.15 : emphasis === "faded" ? 0.05 : 0.32
@@ -335,6 +425,73 @@ function NodeMark({
         <meshBasicMaterial transparent opacity={0} depthWrite={false} colorWrite={false} />
       </mesh>
     </group>
+  )
+}
+
+// What flies off a bursting node: a ring that races outward and a spray of droplets, both in its color.
+function Burst({
+  pop,
+  positions,
+  radius,
+  colorOf,
+}: {
+  pop: RefObject<Pop>
+  positions: THREE.Vector3[]
+  radius: number[]
+  colorOf: (i: number) => THREE.Color
+}) {
+  const wave = useRef<THREE.Sprite>(null)
+  const spray = useRef<THREE.Group>(null)
+  const directions = useMemo(() => Array.from({ length: DROPLETS }, () => new THREE.Vector3()), [])
+  const sprayed = useRef(-Infinity)
+
+  useFrame((state) => {
+    if (!wave.current || !spray.current) return
+    const { index, at } = pop.current
+    const t = (state.clock.elapsedTime - at - POP.swell) / POP.wave
+    const live = index >= 0 && t >= 0 && t <= 1 && !!positions[index]
+    wave.current.visible = spray.current.visible = live
+    if (!live) return
+
+    if (sprayed.current !== at) {
+      sprayed.current = at
+      directions.forEach((direction) => direction.randomDirection().multiplyScalar(0.6 + Math.random() * 0.8))
+    }
+    const out = 1 - (1 - t) ** 3
+    const fade = (1 - t) ** 2
+    const color = colorOf(index)
+    const size = radius[index]
+
+    wave.current.position.copy(positions[index])
+    wave.current.scale.setScalar(size * (3 + 14 * out))
+    const material = wave.current.material as THREE.SpriteMaterial
+    material.color.copy(color)
+    material.opacity = 0.9 * fade
+
+    spray.current.position.copy(positions[index])
+    spray.current.children.forEach((child, i) => {
+      const droplet = child as THREE.Sprite
+      droplet.position.copy(directions[i]).multiplyScalar(size * 12 * out)
+      droplet.scale.setScalar(size * 2.2 * (1 - t))
+      const dropletMaterial = droplet.material as THREE.SpriteMaterial
+      dropletMaterial.color.copy(color)
+      dropletMaterial.opacity = fade
+    })
+  })
+
+  return (
+    <>
+      <sprite ref={wave} visible={false}>
+        <spriteMaterial map={ring()} transparent depthWrite={false} />
+      </sprite>
+      <group ref={spray} visible={false}>
+        {directions.map((_, i) => (
+          <sprite key={i}>
+            <spriteMaterial map={glow()} transparent depthWrite={false} />
+          </sprite>
+        ))}
+      </group>
+    </>
   )
 }
 

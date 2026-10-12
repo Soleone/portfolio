@@ -5,6 +5,7 @@ import { Skills } from "@/components/portfolio/skills"
 import { About } from "@/components/portfolio/about"
 import { Contact } from "@/components/portfolio/contact"
 import { SiteFooter } from "@/components/portfolio/site-footer"
+import { EasterEggs } from "@/components/portfolio/easter-eggs"
 import { Separator } from "@/components/ui/separator"
 
 export default function Page() {
@@ -24,6 +25,7 @@ export default function Page() {
         <Contact />
       </main>
       <SiteFooter />
+      <EasterEggs />
     </div>
   )
 }

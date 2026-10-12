@@ -5,7 +5,7 @@ import type { ThemeOption, ThemePalette } from "./palette";
  * (products/tasks/src/backend/builtinThemes.ts). Keep them verbatim so a palette can be
  * pasted in either direction and run through the same parser.
  */
-export const BUILTIN_THEMES: { name: string; label: string; toml: string }[] = [
+export const BUILTIN_THEMES: { name: string; label: string; toml: string; hidden?: boolean }[] = [
   {
     name: "tokyo-night",
     label: "Tokyo Night",
@@ -643,6 +643,37 @@ green = "#3a3a3a"
 cyan = "#3e3e3e"
 blue = "#1a1a1a"
 magenta = "#2e2e2e"`,
+  },
+  {
+    // The four greens of the BGB emulator's Game Boy palette: the page is the screen, cards are the pale
+    // text boxes. Hues use only the two dark shades and their midpoint, since anything in the page's own
+    // green would vanish on it; borders and hovers are midpoints between neighbouring shades.
+    // Hidden from the picker; the Konami code switches to it.
+    name: "game-boy",
+    label: "Game Boy",
+    hidden: true,
+    toml: `mode = "light"
+
+accent = "#346856"
+selection = "#b4dca0"
+muted = "#5e9463"
+
+background = "#e0f8d0"
+dark_background = "#88c070"
+lighter_background = "#b4dca0"
+
+foreground = "#081820"
+dark_foreground = "#346856"
+bright_foreground = "#081820"
+
+red = "#081820"
+yellow = "#1e403b"
+orange = "#346856"
+green = "#346856"
+cyan = "#1e403b"
+blue = "#081820"
+magenta = "#346856"
+brown = "#1e403b"`,
   },
 ];
 

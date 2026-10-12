@@ -40,21 +40,22 @@ type ThemeRecord = ThemeOption & { palette: ThemePalette };
 
 // The default leads, the rest follow alphabetically; the picker lists them in this order.
 const records: ThemeRecord[] = [
-  ...BUILTIN_THEMES.map(({ name, label, toml }) => {
+  ...BUILTIN_THEMES.map(({ name, label, toml, hidden }) => {
     const { mode, palette } = parseThemeFile(toml);
-    return { name, label, mode, palette, accent: palette.accent, canvas: palette.dark_background };
+    return { name, label, mode, palette, accent: palette.accent, canvas: palette.dark_background, hidden };
   }),
   SHOWCASE_THEME,
 ].sort((a, b) => Number(b.name === DEFAULT_THEME) - Number(a.name === DEFAULT_THEME) || a.label.localeCompare(b.label));
 
 if (!records.some((theme) => theme.name === DEFAULT_THEME)) throw new Error(`unknown default theme "${DEFAULT_THEME}"`);
 
-export const themeOptions: ThemeOption[] = records.map(({ name, label, mode, accent, canvas }) => ({
+export const themeOptions: ThemeOption[] = records.map(({ name, label, mode, accent, canvas, hidden }) => ({
   name,
   label,
   mode,
   accent,
   canvas,
+  ...(hidden ? { hidden } : {}),
 }));
 
 const declarations = (palette: ThemePalette): string =>

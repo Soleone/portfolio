@@ -94,7 +94,7 @@ const stretch = (value: number, count: number) => {
 // covers the far corner. A View Transition snapshots the page in the old theme and shows the new
 // one through the circle (theme.css turns its default cross-fade off). Without View Transitions,
 // or with reduced motion, the theme just switches.
-function revealTheme(apply: () => void, origin: { x: number; y: number } | undefined, reduced: boolean) {
+export function revealTheme(apply: () => void, origin: { x: number; y: number } | undefined, reduced: boolean) {
   if (reduced || !origin || !("startViewTransition" in document)) return apply()
   const root = document.documentElement
   root.classList.add("theme-reveal")
@@ -113,7 +113,9 @@ function revealTheme(apply: () => void, origin: { x: number; y: number } | undef
 }
 
 export function ThemePicker() {
-  const { theme, themes, setTheme } = useTheme()
+  const { theme, themes: all, setTheme } = useTheme()
+  // A hidden theme joins the ring only while it is the one in use.
+  const themes = all.filter((candidate) => !candidate.hidden || candidate.name === theme)
   const reduced = useReducedMotion() ?? false
   const [open, setOpen] = useState(false)
   const [front, setFront] = useState(0)

@@ -6,6 +6,8 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { profile } from "@/lib/portfolio"
 import { ThemePicker } from "@/components/theme"
 import { Menu } from "lucide-react"
+import { CoinCounter } from "./coins"
+import { SecretThemeHint } from "./easter-eggs"
 
 const navItems = [
   { label: "Work", href: "#work" },
@@ -39,7 +41,11 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <ThemePicker />
+          <CoinCounter />
+          <div className="relative">
+            <ThemePicker />
+            <SecretThemeHint />
+          </div>
 
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger

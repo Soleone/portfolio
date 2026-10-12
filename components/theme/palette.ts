@@ -22,6 +22,8 @@ export type ThemeOption = {
   mode: ThemeMode;
   accent: string;
   canvas: string;
+  /** Left out of the picker unless it is the active theme; something else on the site unlocks it. */
+  hidden?: boolean;
 };
 
 const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;

@@ -28,6 +28,9 @@
 --color-destructive: var(--destructive);
 --color-destructive-foreground: var(--destructive-foreground);
 --color-success: var(--success);
+/* A coin takes the theme's yellow (chart-3), with a darker rim. */
+--color-coin: var(--chart-3);
+--color-coin-edge: color-mix(in oklab, var(--chart-3) 65%, black);
 --color-border: var(--border);
 --color-input: var(--input);
 --color-ring: var(--ring);
