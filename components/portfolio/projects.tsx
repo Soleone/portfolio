@@ -73,6 +73,7 @@ export function toCardProject(project: Project, index: number): CardProject {
     // Curated images stand in when the feed has no capture for the repo.
     media: media.hero || media.motion || media.video ? media : { hero: project.image },
     icon: project.icon,
+    colors: project.colors,
     glyph: <Icon strokeWidth={1.75} />,
     // The theme decides what color each of the eight tints is.
     tint: (index % 8) + 1,

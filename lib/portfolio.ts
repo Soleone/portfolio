@@ -25,6 +25,8 @@ export type Project = {
   tech: string[]
   href: string
   icon?: string
+  // From showcase's feed: brand colors as #rrggbb, primary first. The first tints the card, the second shades it.
+  colors?: string[]
   // From showcase's feed (see lib/showcase.ts): a looping or still image, and a one-click demo.
   image?: string
   live?: string

@@ -28,6 +28,7 @@ export type CardProject = {
   live?: string
   media: ProjectMedia
   icon?: string
+  colors?: string[] // brand colors, primary first: the first tints the card, the second shades it
   glyph: ReactNode // a rendered icon, so server components can pass it
   tint: number // 1..8, which --tint-* token colors this card
 }
@@ -184,7 +185,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
   const showingBack = turns % 2 === 1
   const surface: CSSProperties = {
     // Tinted from the theme's card color, so every theme gets its own take on the project tint.
-    background: `linear-gradient(160deg, color-mix(in oklch, var(--card) 86%, var(--tint)) 0%, var(--card) 55%, color-mix(in oklch, var(--card) 80%, color-mix(in oklch, var(--tint), black 20%)) 100%)`,
+    background: `linear-gradient(160deg, color-mix(in oklch, var(--card) 86%, var(--tint)) 0%, var(--card) 55%, color-mix(in oklch, var(--card) 80%, color-mix(in oklch, var(--tint-end, var(--tint)), black 20%)) 100%)`,
   }
   const layer = (share: number): CSSProperties => ({ transform: `translateZ(${t.depth * share}px)` })
 
@@ -197,7 +198,9 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
       className="pointer-events-none relative -m-28 p-28 [contain-intrinsic-height:auto_440px] [content-visibility:auto]"
       style={
         {
-          "--tint": `var(--tint-${project.tint})`,
+          // A project's own brand colors win over the theme's tint for its card.
+          "--tint": project.colors?.[0] ?? `var(--tint-${project.tint})`,
+          ...(project.colors?.[1] ? { "--tint-end": project.colors[1] } : {}),
           ...(reduced
             ? {}
             : {
@@ -258,7 +261,13 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
                   </span>
                 )}
               </div>
-              <h3 className="mt-1.5 truncate text-xl font-semibold tracking-tight">{project.title}</h3>
+              <div className="mt-1.5 flex items-center gap-2">
+                {project.icon && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={project.icon} alt="" draggable={false} className="size-6 shrink-0 rounded-md object-contain" />
+                )}
+                <h3 className="truncate text-xl font-semibold tracking-tight">{project.title}</h3>
+              </div>
               <p className="mt-1.5 line-clamp-3 h-[4.875em] text-sm leading-relaxed text-pretty text-muted-foreground">
                 {project.pitch}
               </p>
@@ -304,7 +313,12 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
             <div className="flex flex-1 flex-col p-6" style={layer(0.55)}>
               <div className="flex items-center gap-3">
                 <div className="grid size-11 place-items-center rounded-xl bg-foreground/[0.06]">
-                  <span className="[&_svg]:size-5">{project.glyph}</span>
+                  {project.icon ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={project.icon} alt="" draggable={false} className="size-7 rounded-md object-contain" />
+                  ) : (
+                    <span className="[&_svg]:size-5">{project.glyph}</span>
+                  )}
                 </div>
                 <div>
                   <h3 className="text-lg leading-tight font-semibold tracking-tight">{project.title}</h3>

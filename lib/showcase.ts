@@ -18,6 +18,7 @@ export type FeedProject = {
   repo?: string
   live?: string
   media?: { hero?: string; motion?: string; video?: string; screenshots?: string[] }
+  brand?: { icon?: string; logo?: string; wordmark?: string; colors?: string[] }
   tier: ShowcaseTier | null
   target: ShowcaseTier | null
   gap: string[]
@@ -78,6 +79,8 @@ export function feedToProject(entry: FeedProject, feedOrder?: number): Project {
     tech: entry.tech ?? [],
     href: entry.repo ?? entry.live ?? "#",
     image: mediaUrl(entry.media?.motion ?? entry.media?.hero),
+    icon: mediaUrl(entry.brand?.icon),
+    colors: entry.brand?.colors,
     live: entry.live,
   }
 }
@@ -91,7 +94,7 @@ export function withShowcase(projects: Project[], { projects: entries }: Showcas
   const enriched = projects.map((project) => {
     const entry = byRepo.get(repoKey(project.href))
     if (!entry) return project
-    const { image, live, title, description, details, type: label } = feedToProject(entry)
+    const { image, live, icon, colors, title, description, details, type: label } = feedToProject(entry)
     // A project with its own showcase.json has written its title, pitch, description and kind for the card, so those win over curated copy.
     // A draft's kind is only a guess, so drafts keep the curated type.
     const own = entry.source === "showcase.json"
@@ -103,6 +106,8 @@ export function withShowcase(projects: Project[], { projects: entries }: Showcas
       type: own && label ? label : project.type,
       stage: entry.stage ?? project.stage,
       image: project.image ?? image,
+      icon: project.icon ?? icon,
+      colors: colors ?? project.colors,
       live: project.live ?? live,
       priority: entry.priority ?? project.priority,
       showcaseTier: entry.tier,
