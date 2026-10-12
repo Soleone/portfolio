@@ -170,6 +170,37 @@ export function buildGraph(rows: OutlineRow[], projects: Project[], { withProjec
 
 export const neighborsOf = (graph: SkillGraph, id: string) => graph.adjacency.get(id) ?? []
 
+// Search ignores case, spaces and punctuation, so "nextjs" finds Next.js and "tail" finds Tailwind CSS.
+const searchable = (text: string) => text.toLowerCase().replace(/[^a-z0-9+#]/g, "")
+
+/** How well a label answers a query: 0 for the name itself, then prefix, word start, anywhere; null for no match. */
+export function matchRank(label: string, query: string) {
+  const want = searchable(query)
+  const have = searchable(label)
+  if (!want) return null
+  if (have === want) return 0
+  if (have.startsWith(want)) return 1
+  if (label.toLowerCase().split(/[^a-z0-9+#]+/).some((word) => word.startsWith(want))) return 2
+  return have.includes(want) ? 3 : null
+}
+
+const kindOrder: Record<SkillNode["kind"], number> = { field: 0, area: 1, skill: 2, project: 3 }
+
+/** Nodes matching a query, best first: closer matches, then broader things, then shorter names. */
+export function searchGraph(graph: SkillGraph, query: string) {
+  return graph.nodes
+    .map((node) => ({ node, rank: matchRank(node.label, query) }))
+    .filter((hit): hit is { node: SkillNode; rank: number } => hit.rank !== null)
+    .sort(
+      (a, b) =>
+        a.rank - b.rank ||
+        kindOrder[a.node.kind] - kindOrder[b.node.kind] ||
+        a.node.label.length - b.node.label.length ||
+        a.node.label.localeCompare(b.node.label)
+    )
+    .map((hit) => hit.node)
+}
+
 // Layouts. Each arrangement is the same graph settled under a different pull, so switching one
 // moves every node from where it is to where it now belongs. Each node starts from a spot seeded by
 // its id, so a layout is the same on every load and barely moves when a node is added elsewhere.

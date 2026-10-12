@@ -2,16 +2,17 @@
 
 import { useReducedMotion } from "motion/react"
 import dynamic from "next/dynamic"
-import { ArrowLeft, ArrowUpRight, Diamond, Footprints, Pause, X } from "lucide-react"
+import { ArrowLeft, ArrowUpRight, Diamond, Footprints, Pause, Search, X } from "lucide-react"
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import { Color } from "three"
 import { useTheme } from "@/components/theme"
 import { Button } from "@/components/ui/button"
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
 import { Kbd } from "@/components/ui/kbd"
 import { Toggle } from "@/components/ui/toggle"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { projects } from "@/lib/portfolio"
-import { buildGraph, neighborsOf, slug, type Arrangement, type OutlineRow, type SkillGraph as Graph, type SkillNode } from "@/lib/skill-graph"
+import { buildGraph, neighborsOf, searchGraph, slug, type Arrangement, type OutlineRow, type SkillGraph as Graph, type SkillNode } from "@/lib/skill-graph"
 import { cn } from "@/lib/utils"
 import type { GraphColors } from "./skill-graph-scene"
 
@@ -93,6 +94,7 @@ export function SkillGraph({
   stacked = false,
   selected,
   onFocusChange,
+  search,
 }: {
   outline: OutlineRow[]
   // One column, panel under the stage, for narrow hosts like the outliner's preview.
@@ -100,10 +102,13 @@ export function SkillGraph({
   // Lets a host (the outliner) point the graph at a node, and hear where the visitor walks.
   selected?: string | null
   onFocusChange?: (id: string | null) => void
+  // A host with its own search box passes its query; without one the graph shows its own box.
+  search?: string
 }) {
   const [arrangement, setArrangement] = useState<Arrangement>("map")
   const [withProjects, setWithProjects] = useState(false)
   const [filter, setFilter] = useState<number | null>(null)
+  const [ownQuery, setOwnQuery] = useState("")
   const [trail, setTrail] = useState<string[]>([])
   const [hover, setHover] = useState<string | null>(null)
   const [wandering, setWandering] = useState(false)
@@ -115,6 +120,14 @@ export function SkillGraph({
   // Nodes can leave the graph (projects switched off, an entry deleted in the outliner); the path skips them.
   const path = useMemo(() => trail.filter((id) => graph.byId.has(id)), [trail, graph])
   const focus = path.at(-1) ?? null
+  const query = search ?? ownQuery
+  const matches = useMemo(() => (query.trim() ? searchGraph(graph, query) : null), [graph, query])
+  // Search matches, or else the chosen field, are what the scene picks out.
+  const highlight = useMemo(() => {
+    if (matches) return new Set(matches.map((node) => node.id))
+    if (filter === null) return null
+    return new Set(graph.nodes.filter((node) => node.fields.includes(filter)).map((node) => node.id))
+  }, [matches, filter, graph])
   const latest = useRef(graph)
   latest.current = graph
 
@@ -182,11 +195,20 @@ export function SkillGraph({
     return () => clearInterval(id)
   }, [wandering])
 
+  function onSearch(value: string) {
+    setOwnQuery(value)
+    setFilter(null)
+    // A focused node outshines everything else, so a new search lets go of it.
+    if (value.trim() && focus) clear()
+  }
+
   function onKeyDown(event: KeyboardEvent) {
-    if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return
-    if (event.key === "Escape" && (focus || filter !== null)) {
-      clear()
+    const typing = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement
+    if (typing && event.key !== "Escape") return
+    if (event.key === "Escape" && focus) clear()
+    else if (event.key === "Escape" && (filter !== null || ownQuery)) {
       setFilter(null)
+      setOwnQuery("")
     } else if (event.key === "Backspace" && focus) {
       event.preventDefault()
       setWandering(false)
@@ -197,29 +219,21 @@ export function SkillGraph({
   return (
     <div className={cn("flex flex-col gap-4", !stacked && "mt-10")} onKeyDown={onKeyDown}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Highlight a field">
-          {graph.fields.map((field, index) => (
-            <button
-              key={field.id}
-              type="button"
-              aria-pressed={filter === index}
-              onClick={() => {
-                setFilter(filter === index ? null : index)
-                clear()
-              }}
-              className={cn(
-                "inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors",
-                filter === index
-                  ? "border-foreground/30 bg-secondary text-secondary-foreground"
-                  : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <span className="size-2 rounded-full" style={{ background: fieldToken(index) }} />
-              {field.label}
-            </button>
-          ))}
-        </div>
-
+        {search === undefined ? (
+          <SkillSearch
+            query={ownQuery}
+            matches={matches ?? []}
+            shortcut={!stacked}
+            onQuery={onSearch}
+            onSelect={(id) => {
+              setOwnQuery("")
+              select(id)
+            }}
+            onHover={setHover}
+          />
+        ) : (
+          <span />
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <Toggle
             pressed={withProjects}
@@ -249,6 +263,30 @@ export function SkillGraph({
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Highlight a field">
+        {graph.fields.map((field, index) => (
+          <button
+            key={field.id}
+            type="button"
+            aria-pressed={filter === index}
+            onClick={() => {
+              setFilter(filter === index ? null : index)
+              setOwnQuery("")
+              clear()
+            }}
+            className={cn(
+              "inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors",
+              filter === index
+                ? "border-foreground/30 bg-secondary text-secondary-foreground"
+                : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            <span className="size-2 rounded-full" style={{ background: fieldToken(index) }} />
+            {field.label}
+          </button>
+        ))}
+      </div>
+
       <div className={cn("grid gap-4", !stacked && "lg:grid-cols-[minmax(0,1fr)_300px]")}>
         <div
           ref={stage}
@@ -270,7 +308,7 @@ export function SkillGraph({
               arrangement={arrangement}
               focus={focus}
               hover={hover}
-              filter={filter}
+              highlight={highlight}
               colors={colors}
               reducedMotion={reducedMotion}
               onSelect={select}
@@ -278,7 +316,7 @@ export function SkillGraph({
               onClear={clear}
             />
           ) : (
-            !webgl && <FlatGraph graph={graph} focus={focus} filter={filter} onSelect={select} />
+            !webgl && <FlatGraph graph={graph} focus={focus} highlight={highlight} onSelect={select} />
           )}
 
           {path.length > 0 && (
@@ -340,6 +378,153 @@ export function SkillGraph({
           )}
         </aside>
       </div>
+    </div>
+  )
+}
+
+const SHOWN_MATCHES = 8
+
+// Typing lights up every match in the scene; the list under the box flies to one.
+function SkillSearch({
+  query,
+  matches,
+  shortcut,
+  onQuery,
+  onSelect,
+  onHover,
+}: {
+  query: string
+  matches: SkillNode[]
+  // Whether "/" anywhere on the page jumps into the box.
+  shortcut: boolean
+  onQuery: (query: string) => void
+  onSelect: (id: string) => void
+  onHover: (id: string | null) => void
+}) {
+  const input = useRef<HTMLInputElement>(null)
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(0)
+  const shown = matches.slice(0, SHOWN_MATCHES)
+  const expanded = open && query.trim() !== ""
+
+  useEffect(() => {
+    if (!shortcut) return
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      const target = event.target as HTMLElement
+      if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) return
+      if (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return
+      event.preventDefault()
+      input.current?.focus()
+    }
+    document.addEventListener("keydown", onKey)
+    return () => document.removeEventListener("keydown", onKey)
+  }, [shortcut])
+
+  const choose = (node: SkillNode | undefined) => {
+    if (!node) return
+    onHover(null)
+    setOpen(false)
+    onSelect(node.id)
+  }
+
+  function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault()
+      if (!shown.length) return
+      setOpen(true)
+      setActive((active) => (active + (event.key === "ArrowDown" ? 1 : shown.length - 1)) % shown.length)
+    } else if (event.key === "Enter") {
+      event.preventDefault()
+      choose(shown[active])
+    } else if (event.key === "Escape" && query) {
+      // Esc lets go of the query first; on an empty box it reaches the graph, which closes the node.
+      event.stopPropagation()
+      onQuery("")
+    }
+  }
+
+  return (
+    <div className="relative w-full sm:w-72">
+      <InputGroup className="h-8 bg-background/60">
+        <InputGroupAddon>
+          <Search />
+        </InputGroupAddon>
+        <InputGroupInput
+          ref={input}
+          type="text"
+          role="combobox"
+          aria-label="Search the map"
+          aria-expanded={expanded}
+          aria-controls="skill-search-results"
+          aria-activedescendant={expanded && shown[active] ? `skill-search-${shown[active].id}` : undefined}
+          aria-autocomplete="list"
+          autoComplete="off"
+          spellCheck={false}
+          placeholder="Search the map"
+          value={query}
+          onChange={(event) => {
+            onQuery(event.target.value)
+            setActive(0)
+            setOpen(true)
+          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => {
+            setOpen(false)
+            onHover(null)
+          }}
+          onKeyDown={onKeyDown}
+          className="text-sm"
+        />
+        <InputGroupAddon align="inline-end">
+          {query ? (
+            <InputGroupButton size="icon-xs" aria-label="Clear search" onClick={() => onQuery("")}>
+              <X />
+            </InputGroupButton>
+          ) : (
+            shortcut && <Kbd>/</Kbd>
+          )}
+        </InputGroupAddon>
+      </InputGroup>
+
+      {expanded && (
+        <div className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-lg">
+          <ul id="skill-search-results" role="listbox" aria-label="Matches" className={cn("flex flex-col p-1", !shown.length && "hidden")}>
+            {shown.map((node, index) => (
+              <li
+                key={node.id}
+                id={`skill-search-${node.id}`}
+                role="option"
+                aria-selected={index === active}
+                // Keeps the input focused, so the click lands before the list closes.
+                onPointerDown={(event) => event.preventDefault()}
+                onClick={() => choose(node)}
+                onPointerEnter={() => {
+                  setActive(index)
+                  onHover(node.id)
+                }}
+                onPointerLeave={() => onHover(null)}
+                className={cn(
+                  "flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm",
+                  index === active && "bg-muted"
+                )}
+              >
+                <span className="size-2 shrink-0 rounded-full" style={{ background: tokenOf(node) }} />
+                <span className={cn("shrink-0", node.kind === "project" && "italic")}>{node.label}</span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {node.kind === "field" ? "Field" : node.kind === "project" ? `Project · ${node.project?.year}` : node.paths[0]?.join(" › ")}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className={cn("border-border px-3 py-1.5 text-xs text-muted-foreground", shown.length > 0 && "border-t")}>
+            {matches.length === 0
+              ? "Not on the map"
+              : matches.length > shown.length
+                ? `${matches.length} matches, lit up in the map`
+                : `${matches.length} ${matches.length === 1 ? "match" : "matches"} · Enter to fly there`}
+          </p>
+        </div>
+      )}
     </div>
   )
 }
@@ -514,12 +699,12 @@ function FocusPanel({
 function FlatGraph({
   graph,
   focus,
-  filter,
+  highlight,
   onSelect,
 }: {
   graph: Graph
   focus: string | null
-  filter: number | null
+  highlight: ReadonlySet<string> | null
   onSelect: (id: string) => void
 }) {
   const near = new Set(focus ? neighborsOf(graph, focus) : [])
@@ -534,7 +719,7 @@ function FlatGraph({
             "inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs transition-opacity",
             node.kind === "field" && "font-semibold uppercase",
             node.id === focus && "border-primary text-foreground",
-            (focus ? node.id !== focus && !near.has(node.id) : filter !== null && !node.fields.includes(filter)) && "opacity-30"
+            (focus ? node.id !== focus && !near.has(node.id) : !!highlight && !highlight.has(node.id)) && "opacity-30"
           )}
         >
           <span className="size-2 rounded-full" style={{ background: tokenOf(node) }} />

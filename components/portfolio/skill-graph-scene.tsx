@@ -14,7 +14,8 @@ export type SceneProps = {
   arrangement: Arrangement
   focus: string | null
   hover: string | null
-  filter: number | null
+  // Nodes to pick out (a field's members, or search matches); null when nothing is picked out.
+  highlight: ReadonlySet<string> | null
   colors: GraphColors
   reducedMotion: boolean
   // Off screen, the scene stops drawing.
@@ -24,7 +25,7 @@ export type SceneProps = {
   onClear: () => void
 }
 
-// How loud a node or edge is: the one in focus, its neighbours, everything else, and what a filter or focus pushes back.
+// How loud a node or edge is: the one in focus, its neighbours, everything else, and what a highlight or focus pushes back.
 type Emphasis = "focus" | "near" | "rest" | "faded"
 
 const SEGMENTS = 10 // straight pieces per curved edge
@@ -51,20 +52,20 @@ function topologyOf(graph: SkillGraph): Topology {
 // Frame-rate independent easing toward a target.
 const ease = (rate: number, delta: number) => 1 - Math.exp(-rate * delta)
 
-function emphasisFor(graph: SkillGraph, { focus, hover, filter }: Pick<SceneProps, "focus" | "hover" | "filter">) {
+function emphasisFor(graph: SkillGraph, { focus, hover, highlight }: Pick<SceneProps, "focus" | "hover" | "highlight">) {
   const active = hover ?? focus
   const lit = new Set(active ? [active, ...neighborsOf(graph, active)] : [])
-  const inFilter = (node?: SkillNode) => filter === null || !!node?.fields.includes(filter)
+  const inFilter = (node?: SkillNode) => !highlight || (!!node && highlight.has(node.id))
 
   const node = graph.nodes.map((node): Emphasis => {
     if (node.id === active || node.id === focus) return "focus"
     if (active) return lit.has(node.id) ? "near" : "faded"
-    if (filter !== null) return inFilter(node) ? "near" : "faded"
+    if (highlight) return inFilter(node) ? "near" : "faded"
     return "rest"
   })
   const edge = graph.edges.map((edge): Emphasis => {
     if (active) return edge.source === active || edge.target === active ? "focus" : "faded"
-    if (filter !== null) return inFilter(graph.byId.get(edge.source)) && inFilter(graph.byId.get(edge.target)) ? "near" : "faded"
+    if (highlight) return inFilter(graph.byId.get(edge.source)) && inFilter(graph.byId.get(edge.target)) ? "near" : "faded"
     return "rest"
   })
   return { node, edge, active }
@@ -104,9 +105,9 @@ function glow() {
 }
 
 export default function SkillGraphScene(props: SceneProps) {
-  const { graph, focus, hover, filter } = props
+  const { graph, focus, hover, highlight } = props
   const topology = useMemo(() => topologyOf(graph), [graph])
-  const emphasis = useMemo(() => emphasisFor(graph, { focus, hover, filter }), [graph, focus, hover, filter])
+  const emphasis = useMemo(() => emphasisFor(graph, { focus, hover, highlight }), [graph, focus, hover, highlight])
   const labels = useRef<(HTMLButtonElement | null)[]>([])
 
   return (
@@ -160,7 +161,7 @@ type GraphProps = SceneProps & {
   labels: RefObject<(HTMLButtonElement | null)[]>
 }
 
-function Graph({ graph, arrangement, focus, hover, filter, colors, reducedMotion, onSelect, onHover, topology, emphasis, labels }: GraphProps) {
+function Graph({ graph, arrangement, focus, hover, highlight, colors, reducedMotion, onSelect, onHover, topology, emphasis, labels }: GraphProps) {
   const target = layoutFor(graph, arrangement)
   // Where each node is drawn this frame. Positions outlive a change to the graph, so nodes travel from
   // wherever they were to where they now belong, and a new node starts where it will settle.
@@ -190,7 +191,7 @@ function Graph({ graph, arrangement, focus, hover, filter, colors, reducedMotion
   return (
     <>
       <Edges topology={topology} positions={positions} emphasis={emphasis.edge} color={colors.edge} />
-      <Pulses topology={topology} positions={positions} active={emphasis.active} filter={filter} colorOf={colorOf} reducedMotion={reducedMotion} />
+      <Pulses topology={topology} positions={positions} active={emphasis.active} highlight={highlight} colorOf={colorOf} reducedMotion={reducedMotion} />
       {topology.nodes.map((node, i) => (
         <NodeMark
           key={node.id}
@@ -203,7 +204,7 @@ function Graph({ graph, arrangement, focus, hover, filter, colors, reducedMotion
           onHover={onHover}
         />
       ))}
-      <Rig topology={topology} positions={positions} focus={focus} filter={filter} hover={hover} reducedMotion={reducedMotion} />
+      <Rig topology={topology} positions={positions} focus={focus} highlight={highlight} hover={hover} reducedMotion={reducedMotion} />
       {/* After the rig, so labels are placed for the camera this frame is drawn from. */}
       <LabelTracker topology={topology} positions={positions} emphasis={emphasis.node} labels={labels} />
     </>
@@ -227,7 +228,7 @@ function LabelTracker({
 
   // Labels follow their nodes on screen. Nearer ones sit on top and read louder, which is most of the
   // depth cue. Like a map, detail comes with closeness: fields always show their names, areas once
-  // nearer, and single skills only up close, in focus or in the filtered field.
+  // nearer, and single skills only up close, in focus or highlighted.
   useFrame(() => {
     camera.updateMatrixWorld()
     const pixelsPerUnit = size.height / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)))
@@ -400,14 +401,14 @@ function Pulses({
   topology,
   positions,
   active,
-  filter,
+  highlight,
   colorOf,
   reducedMotion,
 }: {
   topology: Topology
   positions: THREE.Vector3[]
   active: string | null
-  filter: number | null
+  highlight: ReadonlySet<string> | null
   colorOf: (i: number) => THREE.Color
   reducedMotion: boolean
 }) {
@@ -444,7 +445,7 @@ function Pulses({
       timer.current -= delta
       if (timer.current <= 0) {
         const source = active ? topology.index.get(active) : undefined
-        const touches = (i: number) => filter === null || topology.nodes[i].fields.includes(filter)
+        const touches = (i: number) => !highlight || highlight.has(topology.nodes[i].id)
         const candidates = topology.ends
           .map((ends, edge) => ({ ends, edge }))
           .filter(({ ends: [a, b] }) => (source !== undefined ? a === source || b === source : touches(a) || touches(b)))
@@ -484,20 +485,20 @@ function launch(pool: Pulse[], topology: Topology, edge: number, from: number, s
   Object.assign(pulse, { edge, from, to: from === a ? b : a, t: 0, speed })
 }
 
-// The camera orbits whatever is in view: the focused node, the filtered group, or the whole graph,
+// The camera orbits whatever is in view: the focused node, the highlighted group, or the whole graph,
 // and moves closer the narrower that is. Turning stays with the visitor; zoom is ours, so the wheel scrolls the page.
 function Rig({
   topology,
   positions,
   focus,
-  filter,
+  highlight,
   hover,
   reducedMotion,
 }: {
   topology: Topology
   positions: THREE.Vector3[]
   focus: string | null
-  filter: number | null
+  highlight: ReadonlySet<string> | null
   hover: string | null
   reducedMotion: boolean
 }) {
@@ -522,14 +523,16 @@ function Rig({
     let distance = 17.5
     goal.set(0, 0, 0)
     const focused = focus ? topology.index.get(focus) : undefined
-    const members = filter === null ? [] : positions.filter((_, i) => topology.nodes[i]?.fields.includes(filter))
+    const members = highlight ? positions.filter((_, i) => topology.nodes[i] && highlight.has(topology.nodes[i].id)) : []
     if (focused !== undefined) {
       goal.copy(positions[focused])
       distance = 10
     } else if (members.length > 0) {
       members.forEach((member) => goal.add(member))
       goal.divideScalar(members.length)
-      distance = 12.5
+      // Close in on a tight group, stay back for a scattered one.
+      const spread = Math.max(...members.map((member) => member.distanceTo(goal)))
+      distance = THREE.MathUtils.clamp(6 + spread * 1.1, 9, 14)
     }
 
     // A portrait stage is narrower than it is tall, so the camera backs off to keep the sides in.

@@ -1,12 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowLeft, ChevronRight, ChevronsDownUp, ChevronsUpDown, Trash2 } from "lucide-react"
+import { ArrowLeft, ChevronRight, ChevronsDownUp, ChevronsUpDown, Search, Trash2, X } from "lucide-react"
 import {
   useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
+  useReducer,
   useRef,
   useState,
   useTransition,
@@ -15,8 +16,9 @@ import {
 } from "react"
 import { saveSkills } from "@/app/skills/actions"
 import { Button } from "@/components/ui/button"
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
 import { Kbd } from "@/components/ui/kbd"
-import { formatOutline, parseOutline, slug, tidy, type Outline, type OutlineRow } from "@/lib/skill-graph"
+import { formatOutline, matchRank, parseOutline, slug, tidy, type Outline, type OutlineRow } from "@/lib/skill-graph"
 import { cn } from "@/lib/utils"
 import { fieldToken, SkillGraph } from "./skill-graph"
 
@@ -57,6 +59,7 @@ const keys: [string, string][] = [
   ["⌘↑ / ⌘↓", "fold / unfold"],
   ["⌘Z / ⇧⌘Z", "undo / redo"],
   ["⌘S", "save"],
+  ["⌘K", "search"],
 ]
 
 function useDebounced<T>(value: T, ms: number) {
@@ -75,6 +78,12 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
   const [selected, setSelected] = useState<string | null>(null)
   const [highlight, setHighlight] = useState<string | null>(null)
   const [status, setStatus] = useState<{ tone: "good" | "bad"; text: string } | null>(null)
+  const [query, setQuery] = useState("")
+  const searching = query.trim() !== ""
+  // Rows made, edited or walked to during a search stay in view, even once they no longer match it.
+  const kept = useRef(new Set<string>())
+  const [keptChanged, noteKept] = useReducer((n: number) => n + 1, 0)
+  const searchBox = useRef<HTMLInputElement>(null)
   const [saving, startSaving] = useTransition()
   const history = useRef({ past: [] as Row[][], future: [] as Row[][], typing: "" })
   // Focus to place after the next render: a row's key and where the caret goes.
@@ -98,7 +107,32 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
     return rows.map((row) => (row.depth === 0 ? ++field : field))
   }, [rows])
 
+  // Searching shows the rows that match and the rows above them, folded or not.
+  const found = useMemo(() => {
+    if (!searching) return null
+    const matching = new Set<number>()
+    const lit = new Set<number>()
+    const shown = new Set<number>()
+    rows.forEach((row, i) => {
+      const hit = matchRank(row.text, query) !== null
+      if (!hit && !kept.current.has(row.key)) return
+      if (hit) matching.add(i)
+      lit.add(i)
+      shown.add(i)
+      let depth = row.depth
+      for (let k = i - 1; k >= 0 && depth > 0; k--) {
+        if (rows[k].depth < depth) {
+          shown.add(k)
+          depth = rows[k].depth
+        }
+      }
+    })
+    return { matching, lit, shown }
+    // keptChanged is here because a walk in the preview can keep a row without the rows changing.
+  }, [rows, query, searching, keptChanged])
+
   const visible = useMemo(() => {
+    if (found) return rows.map((_, i) => i).filter((i) => found.shown.has(i))
     const shown: number[] = []
     let hiddenBelow = Infinity
     rows.forEach((row, i) => {
@@ -108,7 +142,7 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
       if (collapsed.has(row.key) && rows[i + 1]?.depth > row.depth) hiddenBelow = row.depth
     })
     return shown
-  }, [rows, collapsed])
+  }, [rows, collapsed, found])
 
   useLayoutEffect(() => {
     const target = pendingFocus.current
@@ -168,6 +202,10 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
         event.preventDefault()
         save()
+      } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault()
+        searchBox.current?.focus()
+        searchBox.current?.select()
       }
     }
     window.addEventListener("keydown", onKeyDown)
@@ -197,6 +235,10 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
       if (!id) return setHighlight(null)
       const i = rows.findIndex((row) => slug(row.text) === id)
       if (i === -1) return setHighlight(null)
+      if (!kept.current.has(rows[i].key)) {
+        kept.current.add(rows[i].key)
+        noteKept()
+      }
       setCollapsed((collapsed) => {
         const next = new Set(collapsed)
         let depth = rows[i].depth
@@ -240,6 +282,7 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
       const opensChildren = end > i + 1 && !collapsed.has(row.key)
       const fresh: Row = { key: newKey(), depth: opensChildren ? row.depth + 1 : row.depth, text: "" }
       const at = opensChildren ? i + 1 : end
+      kept.current.add(fresh.key)
       commit([...rows.slice(0, at), fresh, ...rows.slice(at)])
       pendingFocus.current = { key: fresh.key, caret: 0 }
     } else if (event.key === "Tab") {
@@ -298,6 +341,7 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
     const pasted = keyed(parsed.map((line) => ({ depth: line.depth + row.depth, text: line.text })))
     const replace = row.text.trim() === "" ? 1 : 0
     const at = replace ? i : subtreeEnd(rows, i)
+    for (const line of pasted) kept.current.add(line.key)
     commit([...rows.slice(0, at), ...pasted, ...rows.slice(at + replace)])
     pendingFocus.current = { key: pasted.at(-1)!.key, caret: "end" }
   }
@@ -359,12 +403,64 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
 
       <main className="mx-auto grid max-w-[1440px] gap-10 px-6 py-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,600px)]">
         <div className="flex min-w-0 flex-col gap-4">
-          <div className="flex items-end justify-between gap-4">
-            <p className="max-w-xl text-pretty text-sm text-muted-foreground">
-              The world as you see it, holding only what you have worked with. Nesting draws the edges; a name in
-              two places is one node under both.
-            </p>
+          <p className="max-w-xl text-pretty text-sm text-muted-foreground">
+            The world as you see it, holding only what you have worked with. Nesting draws the edges; a name in
+            two places is one node under both.
+          </p>
+          <div className="flex items-center justify-between gap-4">
+            <InputGroup className="h-8 max-w-sm">
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+              <InputGroupInput
+                ref={searchBox}
+                type="text"
+                aria-label="Search the outline"
+                placeholder="Search the outline"
+                spellCheck={false}
+                autoComplete="off"
+                value={query}
+                onChange={(event) => {
+                  kept.current = new Set()
+                  setQuery(event.target.value)
+                  // The preview lights up every match, so it lets go of the row it was showing.
+                  setSelected(null)
+                  setHighlight(null)
+                }}
+                onFocus={() => searching && setSelected(null)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    event.preventDefault()
+                    if (query) setQuery("")
+                    else event.currentTarget.blur()
+                  } else if ((event.key === "Enter" || event.key === "ArrowDown") && found) {
+                    // Into the outline, at the first match.
+                    event.preventDefault()
+                    const first = rows[[...found.matching][0]]
+                    const input = first && document.querySelector<HTMLInputElement>(`[data-row="${first.key}"]`)
+                    input?.focus()
+                    input?.setSelectionRange(input.value.length, input.value.length)
+                  }
+                }}
+                className="text-sm"
+              />
+              <InputGroupAddon align="inline-end">
+                {searching ? (
+                  <>
+                    <span className="text-xs tabular-nums">
+                      {found?.matching.size ? `${found.matching.size} found` : "None"}
+                    </span>
+                    <InputGroupButton size="icon-xs" aria-label="Clear search" onClick={() => setQuery("")}>
+                      <X />
+                    </InputGroupButton>
+                  </>
+                ) : (
+                  <Kbd>⌘K</Kbd>
+                )}
+              </InputGroupAddon>
+            </InputGroup>
             <Button
+              disabled={searching}
               variant="ghost"
               size="sm"
               onClick={() =>
@@ -380,7 +476,9 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
             {visible.map((i) => {
               const row = rows[i]
               const parent = rows[i + 1]?.depth > row.depth
-              const folded = parent && collapsed.has(row.key)
+              const folded = parent && !searching && collapsed.has(row.key)
+              // Rows only there to place a match read quieter.
+              const context = found && !found.lit.has(i)
               const count = places.get(slug(row.text)) ?? 0
               return (
                 <li
@@ -390,7 +488,8 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
                   aria-expanded={parent ? !folded : undefined}
                   className={cn(
                     "group/row relative flex items-center rounded-md pr-1 transition-colors",
-                    highlight === row.key ? "bg-muted" : "hover:bg-muted/40"
+                    highlight === row.key ? "bg-muted" : "hover:bg-muted/40",
+                    context && "opacity-55"
                   )}
                 >
                   {/* Indent guides, one per level. */}
@@ -400,7 +499,7 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
                   <button
                     type="button"
                     tabIndex={-1}
-                    onClick={() => parent && (folded ? expand(row.key) : setCollapsed((collapsed) => new Set(collapsed).add(row.key)))}
+                    onClick={() => parent && !searching && (folded ? expand(row.key) : setCollapsed((collapsed) => new Set(collapsed).add(row.key)))}
                     className={cn("flex size-6 shrink-0 items-center justify-center rounded", parent && "hover:bg-muted")}
                     aria-label={parent ? (folded ? "Unfold" : "Fold") : undefined}
                   >
@@ -423,6 +522,7 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
                     onKeyDown={(event) => onRowKeyDown(event, i)}
                     onPaste={(event) => onPaste(event, i)}
                     onFocus={() => {
+                      if (searching) kept.current.add(row.key)
                       setHighlight(row.key)
                       if (row.text.trim()) setSelected(slug(row.text))
                     }}
@@ -462,7 +562,7 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
         </div>
 
         <aside className="flex flex-col gap-3 lg:sticky lg:top-20 lg:self-start">
-          <SkillGraph outline={preview} stacked selected={selected} onFocusChange={onFocusChange} />
+          <SkillGraph outline={preview} stacked selected={selected} onFocusChange={onFocusChange} search={query} />
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-muted-foreground">
             {keys.map(([key, does]) => (
               <div key={key} className="contents">
