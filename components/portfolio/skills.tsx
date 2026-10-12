@@ -1,26 +1,24 @@
-import { skillsData } from "@/lib/skill-graph"
+import { readSkillsOutline } from "@/lib/skill-outline"
 import { SectionHeading } from "./section-heading"
 import { SkillGraph } from "./skill-graph"
 
 export function Skills() {
+  const { rows } = readSkillsOutline()
+
   return (
     <section id="skills" className="mx-auto max-w-5xl px-6 py-16 md:py-24">
-      <SectionHeading label="Toolkit" title="Skills & how they connect" />
+      <SectionHeading label="Toolkit" title="A map of what I know" />
 
-      {/* The graph is drawn for the eye; this is the same list for readers and crawlers. */}
+      {/* The map is drawn for the eye; this is the same outline for readers and crawlers. */}
       <ul className="sr-only">
-        {skillsData.groups.map((group) => (
-          <li key={group.id}>
-            {group.label}:{" "}
-            {skillsData.skills
-              .filter((skill) => skill.group === group.id)
-              .map((skill) => skill.label)
-              .join(", ")}
+        {rows.map((row, index) => (
+          <li key={index} style={{ marginLeft: `${row.depth}em` }}>
+            {row.text}
           </li>
         ))}
       </ul>
 
-      <SkillGraph />
+      <SkillGraph outline={rows} />
     </section>
   )
 }

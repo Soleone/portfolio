@@ -1,184 +1,174 @@
-// The skills section draws the toolkit as a graph: skills and the domains they serve are nodes, and
-// every edge says why two of them belong together. content/skills.json is the source of truth (edited
-// at /skills in development); projects are joined in from their tech lists, so the graph stays honest
-// as the project list grows. Pure, so it runs on the server, in the browser and in the editor's preview.
-import data from "@/content/skills.json"
+// The skills section draws a map of the world as I see it, holding only what I have worked with.
+// content/skills.md is the source of truth: a nested bullet list, where nesting places a thing in
+// the world and draws its edges. A name that appears in two places is one node under both parents.
+// Projects join in from their tech lists. Pure, so it runs on the server, in the browser and in the
+// outliner's preview.
 import type { Project } from "@/lib/portfolio"
 
-export type SkillsData = {
-  groups: { id: string; label: string }[]
-  domains: { id: string; label: string }[]
-  // Aliases are other spellings in project tech lists ("Node" for Node.js).
-  skills: { id: string; label: string; group: string; aliases?: string[] }[]
-  // Undirected; the note reads from either end.
-  links: { a: string; b: string; note?: string }[]
+export type OutlineRow = { depth: number; text: string }
+// The file is a comment (kept as is) followed by the list.
+export type Outline = { preamble: string; rows: OutlineRow[] }
+
+const ROW = /^(\s*)[-*+]\s+(.*?)\s*$/
+
+export function parseOutline(source: string): Outline {
+  const lines = source.split(/\r?\n/)
+  const first = lines.findIndex((line) => ROW.test(line))
+  const rows: OutlineRow[] = []
+  for (const line of first === -1 ? [] : lines.slice(first)) {
+    const match = ROW.exec(line)
+    if (!match) continue
+    rows.push({ depth: Math.floor(match[1].replace(/\t/g, "  ").length / 2), text: match[2] })
+  }
+  return { preamble: (first === -1 ? source : lines.slice(0, first).join("\n")).trim(), rows: tidy(rows) }
 }
 
-export const skillsData = data as SkillsData
+/** No empty rows, and none more than one level deeper than the row above it. */
+export function tidy(rows: OutlineRow[]): OutlineRow[] {
+  const out: OutlineRow[] = []
+  for (const row of rows) {
+    const text = row.text.trim()
+    if (!text) continue
+    const deepest = out.length ? out[out.length - 1].depth + 1 : 0
+    out.push({ depth: Math.max(0, Math.min(row.depth, deepest)), text })
+  }
+  return out
+}
+
+export function formatOutline({ preamble, rows }: Outline) {
+  const list = tidy(rows)
+    .map((row) => `${"  ".repeat(row.depth)}- ${row.text}`)
+    .join("\n")
+  return `${preamble ? `${preamble}\n\n` : ""}${list}\n`
+}
+
+export const slug = (label: string) =>
+  label
+    .toLowerCase()
+    .replace(/\+/g, "p")
+    .replace(/#/g, "sharp")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
 
 export type ProjectRef = { title: string; href: string }
 
 export type SkillNode = {
   id: string
   label: string
-  kind: "skill" | "domain" | "project"
-  // Index into the graph's groups, for skills.
-  group?: number
-  // For skills: projects whose tech lists it.
+  // A field is a top-level entry, an area holds other entries, a skill holds none.
+  kind: "field" | "area" | "skill" | "project"
+  // The shallowest level it appears at.
+  depth: number
+  // Fields it sits under (by index into graph.fields); the first one colors it.
+  fields: number[]
+  // Labels from the field down to its parent, once per place it appears.
+  paths: string[][]
+  parents: string[]
+  children: string[]
+  // Projects whose tech lists it.
   projects: ProjectRef[]
   // For project nodes.
   project?: { description: string; year: string; type: string; href: string; live?: string }
 }
 
-export type SkillEdge = {
-  source: string
-  target: string
-  note?: string
-  // Projects that list both ends, or the project an edge belongs to.
-  projects: string[]
-}
+// Parent to child, or project to the skill it uses.
+export type SkillEdge = { source: string; target: string }
 
 export type SkillGraph = {
-  groups: SkillsData["groups"]
+  fields: SkillNode[]
   nodes: SkillNode[]
   edges: SkillEdge[]
   byId: Map<string, SkillNode>
-  adjacency: Map<string, { id: string; edge: SkillEdge }[]>
+  adjacency: Map<string, string[]>
 }
 
-export type Arrangement = "web" | "kind" | "domain"
+export type Arrangement = "map" | "web"
 export type Vec3 = [number, number, number]
 
-export const slug = (label: string) =>
-  label
+// Project tech lists are free text; these name the node they mean when the spelling differs.
+const techAliases: Record<string, string> = {
+  tailwind: "Tailwind CSS",
+  pi: "Pi agent",
+  "chrome extension": "Chrome extensions",
+  gem: "Gems",
+}
+const spelling = (text: string) =>
+  text
     .toLowerCase()
-    .replace(/\+/g, "p")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
+    .replace(/\.js$/, "")
+    .replace(/[^a-z0-9+#]/g, "")
 
-export function buildGraph(data: SkillsData, projects: Project[], { withProjects = false } = {}): SkillGraph {
-  const groupIndex = new Map(data.groups.map((group, index) => [group.id, index]))
-  const nodes: SkillNode[] = [
-    ...data.skills.map((skill): SkillNode => ({
-      id: skill.id,
-      label: skill.label,
-      kind: "skill",
-      group: groupIndex.get(skill.group),
-      projects: [],
-    })),
-    ...data.domains.map((domain): SkillNode => ({ id: domain.id, label: domain.label, kind: "domain", projects: [] })),
-  ]
-  const byId = new Map(nodes.map((node) => [node.id, node]))
-  const byName = new Map<string, SkillNode>()
-  for (const skill of data.skills) {
-    for (const name of [skill.label, ...(skill.aliases ?? [])]) byName.set(name.toLowerCase(), byId.get(skill.id)!)
-  }
-
+export function buildGraph(rows: OutlineRow[], projects: Project[], { withProjects = false } = {}): SkillGraph {
+  const byId = new Map<string, SkillNode>()
+  const nodes: SkillNode[] = []
+  const fields: SkillNode[] = []
   const edges = new Map<string, SkillEdge>()
-  const link = (a: SkillNode, b: SkillNode) => {
-    const key = a.id < b.id ? `${a.id}|${b.id}` : `${b.id}|${a.id}`
-    const edge = edges.get(key) ?? { source: a.id, target: b.id, projects: [] }
-    edges.set(key, edge)
-    return edge
+  const link = (source: SkillNode, target: SkillNode) => {
+    const key = `${source.id}>${target.id}`
+    if (source === target || edges.has(key)) return
+    edges.set(key, { source: source.id, target: target.id })
+    if (!source.children.includes(target.id)) source.children.push(target.id)
+    if (!target.parents.includes(source.id)) target.parents.push(source.id)
   }
 
-  for (const { a, b, note } of data.links) {
-    const from = byId.get(a)
-    const to = byId.get(b)
-    if (from && to && from !== to) link(from, to).note = note
-  }
-
-  for (const project of projects) {
-    const used = [...new Set(project.tech.map((tech) => byName.get(tech.toLowerCase())))].filter((node) => node !== undefined)
-    if (used.length === 0) continue
-    for (const skill of used) skill.projects.push({ title: project.title, href: project.href })
-
-    if (withProjects) {
-      // The project stands between its skills, so "used together" is a path through it.
-      const node: SkillNode = {
-        id: `project:${slug(project.title)}`,
-        label: project.title,
-        kind: "project",
-        projects: [],
-        project: { description: project.description, year: project.year, type: project.type, href: project.href, live: project.live },
-      }
+  // Ancestors of the current row, by depth.
+  const stack: SkillNode[] = []
+  for (const row of tidy(rows)) {
+    const id = slug(row.text) || row.text
+    let node = byId.get(id)
+    if (!node) {
+      node = { id, label: row.text, kind: "skill", depth: row.depth, fields: [], paths: [], parents: [], children: [], projects: [] }
+      byId.set(id, node)
       nodes.push(node)
-      byId.set(node.id, node)
-      for (const skill of used) link(node, skill).projects.push(project.title)
-    } else {
-      // Skills used together in a project are connected, whatever the curated links say.
-      used.forEach((a, i) => used.slice(i + 1).forEach((b) => link(a, b).projects.push(project.title)))
     }
+    stack.length = row.depth
+    if (row.depth === 0 && !fields.includes(node)) fields.push(node)
+    const parent = stack[row.depth - 1]
+    if (parent) link(parent, node)
+    const field = fields.indexOf(stack[0] ?? node)
+    if (!node.fields.includes(field)) node.fields.push(field)
+    node.depth = Math.min(node.depth, row.depth)
+    node.paths.push(stack.map((ancestor) => ancestor.label))
+    stack[row.depth] = node
+  }
+  for (const node of nodes) node.kind = fields.includes(node) ? "field" : node.children.length ? "area" : "skill"
+
+  const byName = new Map(nodes.map((node) => [spelling(node.label), node]))
+  for (const project of projects) {
+    const used = [...new Set(project.tech.map((tech) => byName.get(spelling(techAliases[tech.toLowerCase()] ?? tech))))].filter(
+      (node) => node !== undefined
+    )
+    if (used.length === 0) continue
+    for (const node of used) node.projects.push({ title: project.title, href: project.href })
+    if (!withProjects) continue
+    // The project hangs between the things it was built with.
+    const node: SkillNode = {
+      id: `project:${slug(project.title)}`,
+      label: project.title,
+      kind: "project",
+      depth: Math.max(...used.map((skill) => skill.depth)) + 1,
+      fields: [...new Set(used.flatMap((skill) => skill.fields))],
+      paths: [],
+      parents: [],
+      children: [],
+      projects: [],
+      project: { description: project.description, year: project.year, type: project.type, href: project.href, live: project.live },
+    }
+    nodes.push(node)
+    byId.set(node.id, node)
+    for (const skill of used) link(node, skill)
   }
 
-  const adjacency = new Map<string, { id: string; edge: SkillEdge }[]>(nodes.map((node) => [node.id, []]))
+  const adjacency = new Map<string, string[]>(nodes.map((node) => [node.id, []]))
   for (const edge of edges.values()) {
-    adjacency.get(edge.source)!.push({ id: edge.target, edge })
-    adjacency.get(edge.target)!.push({ id: edge.source, edge })
+    adjacency.get(edge.source)!.push(edge.target)
+    adjacency.get(edge.target)!.push(edge.source)
   }
 
-  return { groups: data.groups, nodes, edges: [...edges.values()], byId, adjacency }
+  return { fields, nodes, edges: [...edges.values()], byId, adjacency }
 }
 
 export const neighborsOf = (graph: SkillGraph, id: string) => graph.adjacency.get(id) ?? []
-
-export type Issue = { id?: string; message: string }
-
-// What would make the file unreadable or a link point nowhere. The editor shows these and refuses to save.
-export function validate(data: SkillsData): Issue[] {
-  const issues: Issue[] = []
-  const groupIds = new Set<string>()
-  for (const group of data.groups) {
-    if (!group.label.trim()) issues.push({ id: group.id, message: "A group has no name" })
-    if (groupIds.has(group.id)) issues.push({ id: group.id, message: `Two groups share the id "${group.id}"` })
-    groupIds.add(group.id)
-  }
-
-  const nodeIds = new Set<string>()
-  for (const node of [...data.skills, ...data.domains]) {
-    if (!node.id) issues.push({ message: `"${node.label}" has no id` })
-    if (!node.label.trim()) issues.push({ id: node.id, message: `"${node.id}" has no name` })
-    if (nodeIds.has(node.id)) issues.push({ id: node.id, message: `Two nodes share the id "${node.id}"` })
-    nodeIds.add(node.id)
-  }
-  for (const skill of data.skills) {
-    if (!groupIds.has(skill.group)) issues.push({ id: skill.id, message: `${skill.label} is in a group that does not exist` })
-  }
-
-  const pairs = new Set<string>()
-  for (const { a, b } of data.links) {
-    if (!nodeIds.has(a) || !nodeIds.has(b)) issues.push({ id: nodeIds.has(a) ? a : b, message: `A link points to a missing node (${a} and ${b})` })
-    if (a === b) issues.push({ id: a, message: `${a} links to itself` })
-    const key = a < b ? `${a}|${b}` : `${b}|${a}`
-    if (pairs.has(key)) issues.push({ id: a, message: `${a} and ${b} are linked twice` })
-    pairs.add(key)
-  }
-  return issues
-}
-
-// Only the known fields, trimmed, and nothing empty, so the file holds exactly what the graph reads.
-export function normalize(data: SkillsData): SkillsData {
-  const words = (list?: string[]) => (list ?? []).map((word) => word.trim()).filter(Boolean)
-  return {
-    groups: data.groups.map(({ id, label }) => ({ id, label: label.trim() })),
-    domains: data.domains.map(({ id, label }) => ({ id, label: label.trim() })),
-    skills: data.skills.map(({ id, label, group, aliases }) => ({
-      id,
-      label: label.trim(),
-      group,
-      ...(words(aliases).length ? { aliases: words(aliases) } : {}),
-    })),
-    links: data.links.map(({ a, b, note }) => ({ a, b, ...(note?.trim() ? { note: note.trim() } : {}) })),
-  }
-}
-
-// One entry per line, so a change in the editor is a one-line diff.
-export function formatSkillsData(data: SkillsData) {
-  const tidy = normalize(data)
-  const list = (items: object[]) => (items.length ? `[\n${items.map((item) => `    ${JSON.stringify(item)}`).join(",\n")}\n  ]` : "[]")
-  const keys = ["groups", "domains", "skills", "links"] as const
-  return `{\n${keys.map((key) => `  "${key}": ${list(tidy[key])}`).join(",\n")}\n}\n`
-}
 
 // Layouts. Each arrangement is the same graph settled under a different pull, so switching one
 // moves every node from where it is to where it now belongs. Each node starts from a spot seeded by
@@ -207,14 +197,14 @@ function sphere(count: number, radius: number): Vec3[] {
   })
 }
 
-type Pull = { anchors: Map<string, Vec3>; strength: number; pinned?: Set<string> }
+type Pull = { anchors: Map<string, Vec3>; strength: number }
 
-function settle(graph: SkillGraph, pull?: Pull, iterations = 400): Map<string, Vec3> {
+function settle(graph: SkillGraph, pull?: Pull, iterations = 260): Map<string, Vec3> {
   const { nodes, edges } = graph
   if (nodes.length === 0) return new Map()
   const position = nodes.map((node): Vec3 => {
     const anchor = pull?.anchors.get(node.id)
-    if (anchor && pull?.pinned?.has(node.id)) return [...anchor]
+    if (anchor) return [...anchor]
     const random = seeded(node.id)
     const theta = random() * Math.PI * 2
     const phi = Math.acos(2 * random() - 1)
@@ -223,27 +213,32 @@ function settle(graph: SkillGraph, pull?: Pull, iterations = 400): Map<string, V
   })
   const index = new Map(nodes.map((node, i) => [node.id, i]))
   const springs = edges.map((edge) => [index.get(edge.source)!, index.get(edge.target)!] as const)
+  const force = nodes.map((): Vec3 => [0, 0, 0])
 
   for (let step = 0; step < iterations; step++) {
     const cooling = 1 - step / iterations
-    const force = nodes.map((): Vec3 => [0, 0, 0])
+    for (const f of force) f.fill(0)
 
     for (let i = 0; i < nodes.length; i++) {
+      const p = position[i]
       for (let j = i + 1; j < nodes.length; j++) {
-        const d = [0, 1, 2].map((axis) => position[i][axis] - position[j][axis])
-        const distance2 = Math.max(d[0] ** 2 + d[1] ** 2 + d[2] ** 2, 0.01)
-        const push = 1.6 / distance2
-        for (let axis = 0; axis < 3; axis++) {
-          force[i][axis] += d[axis] * push
-          force[j][axis] -= d[axis] * push
-        }
+        const q = position[j]
+        const dx = p[0] - q[0]
+        const dy = p[1] - q[1]
+        const dz = p[2] - q[2]
+        const push = 1.6 / Math.max(dx * dx + dy * dy + dz * dz, 0.01)
+        force[i][0] += dx * push
+        force[i][1] += dy * push
+        force[i][2] += dz * push
+        force[j][0] -= dx * push
+        force[j][1] -= dy * push
+        force[j][2] -= dz * push
       }
     }
 
     for (const [i, j] of springs) {
       const d = [0, 1, 2].map((axis) => position[j][axis] - position[i][axis])
-      const distance = Math.sqrt(d[0] ** 2 + d[1] ** 2 + d[2] ** 2) || 0.01
-      const stretch = (distance - 2.6) * 0.08
+      const stretch = (Math.hypot(d[0], d[1], d[2]) - 2) * 0.08
       for (let axis = 0; axis < 3; axis++) {
         force[i][axis] += d[axis] * stretch
         force[j][axis] -= d[axis] * stretch
@@ -251,7 +246,6 @@ function settle(graph: SkillGraph, pull?: Pull, iterations = 400): Map<string, V
     }
 
     nodes.forEach((node, i) => {
-      if (pull?.pinned?.has(node.id)) return
       const anchor = pull?.anchors.get(node.id)
       for (let axis = 0; axis < 3; axis++) {
         // A faint pull to the middle keeps loose ends from drifting off.
@@ -270,28 +264,27 @@ function settle(graph: SkillGraph, pull?: Pull, iterations = 400): Map<string, V
   return new Map(nodes.map((node, i) => [node.id, centered[i].map((value) => value * scale) as Vec3]))
 }
 
-function byKind(graph: SkillGraph) {
-  // Each skill group gathers round its own anchor; domains and projects sit where their skills pull them.
-  const points = sphere(graph.groups.length, 6)
-  const anchors = new Map<string, Vec3>()
-  for (const node of graph.nodes) if (node.group !== undefined) anchors.set(node.id, points[node.group])
-  return settle(graph, { anchors, strength: 1.2 })
-}
+// The map: fields round a core, and every level further out in the direction of its parents, so a
+// field reads as a continent and its specifics as the coast.
+const SHELLS = [2.6, 4.6, 6.3, 7.6, 8.6]
 
-function byDomain(graph: SkillGraph) {
-  // Domains are pinned apart. A skill sits at the middle of the domains it serves, so one shared by
-  // two domains lands between them; skills that serve none drift to the center.
-  const domains = graph.nodes.filter((node) => node.kind === "domain")
-  const points = sphere(domains.length, 4.8)
-  const corner = new Map<string, Vec3>(domains.map((domain, i) => [domain.id, points[i]]))
-  const anchors = new Map(corner)
-  for (const node of graph.nodes) {
-    if (node.kind !== "skill") continue
-    const served = neighborsOf(graph, node.id).flatMap(({ id }) => (corner.has(id) ? [corner.get(id)!] : []))
-    if (served.length === 0) continue
-    anchors.set(node.id, [0, 1, 2].map((axis) => (served.reduce((sum, a) => sum + a[axis], 0) / served.length) * 0.82) as Vec3)
+function byMap(graph: SkillGraph) {
+  const anchors = new Map<string, Vec3>()
+  const points = sphere(graph.fields.length, SHELLS[0])
+  graph.fields.forEach((field, i) => anchors.set(field.id, points[i]))
+  const rest = graph.nodes.filter((node) => !anchors.has(node.id)).sort((a, b) => a.depth - b.depth)
+  for (const node of rest) {
+    const from = [...node.parents, ...(node.kind === "project" ? node.children : [])]
+      .map((id) => anchors.get(id))
+      .filter((anchor) => anchor !== undefined)
+    const random = seeded(node.id)
+    // Siblings start a little apart, so they fan out instead of stacking on their parent's line.
+    const direction = [0, 1, 2].map((axis) => from.reduce((sum, anchor) => sum + anchor[axis], 0) + (random() - 0.5) * 1.2)
+    const length = Math.hypot(...direction) || 1
+    const shell = SHELLS[Math.min(node.depth, SHELLS.length - 1)]
+    anchors.set(node.id, direction.map((value) => (value / length) * shell) as Vec3)
   }
-  return settle(graph, { anchors, strength: 0.6, pinned: new Set(corner.keys()) })
+  return settle(graph, { anchors, strength: 0.3 })
 }
 
 const layouts = new WeakMap<SkillGraph, Partial<Record<Arrangement, Map<string, Vec3>>>>()
@@ -299,6 +292,6 @@ const layouts = new WeakMap<SkillGraph, Partial<Record<Arrangement, Map<string, 
 export function layoutFor(graph: SkillGraph, arrangement: Arrangement): Map<string, Vec3> {
   const cached = layouts.get(graph) ?? {}
   layouts.set(graph, cached)
-  cached[arrangement] ??= arrangement === "kind" ? byKind(graph) : arrangement === "domain" ? byDomain(graph) : settle(graph)
+  cached[arrangement] ??= arrangement === "map" ? byMap(graph) : settle(graph)
   return cached[arrangement]
 }

@@ -7,7 +7,7 @@ import * as THREE from "three"
 import { cn } from "@/lib/utils"
 import { layoutFor, neighborsOf, RADIUS, type Arrangement, type SkillGraph, type SkillNode, type Vec3 } from "@/lib/skill-graph"
 
-export type GraphColors = { groups: THREE.Color[]; domain: THREE.Color; project: THREE.Color; edge: THREE.Color }
+export type GraphColors = { fields: THREE.Color[]; project: THREE.Color; edge: THREE.Color }
 
 export type SceneProps = {
   graph: SkillGraph
@@ -44,9 +44,7 @@ function topologyOf(graph: SkillGraph): Topology {
     nodes: graph.nodes,
     index,
     ends: graph.edges.map((edge) => [index.get(edge.source)!, index.get(edge.target)!] as const),
-    radius: graph.nodes.map((node) =>
-      node.kind === "domain" ? 0.24 : node.kind === "project" ? 0.12 : 0.13 + Math.min(neighborsOf(graph, node.id).length, 8) * 0.012
-    ),
+    radius: graph.nodes.map((node) => (node.kind === "field" ? 0.26 : node.kind === "area" ? 0.15 : 0.1)),
   }
 }
 
@@ -55,8 +53,8 @@ const ease = (rate: number, delta: number) => 1 - Math.exp(-rate * delta)
 
 function emphasisFor(graph: SkillGraph, { focus, hover, filter }: Pick<SceneProps, "focus" | "hover" | "filter">) {
   const active = hover ?? focus
-  const lit = new Set(active ? [active, ...neighborsOf(graph, active).map(({ id }) => id)] : [])
-  const inFilter = (node?: SkillNode) => filter === null || node?.group === filter
+  const lit = new Set(active ? [active, ...neighborsOf(graph, active)] : [])
+  const inFilter = (node?: SkillNode) => filter === null || !!node?.fields.includes(filter)
 
   const node = graph.nodes.map((node): Emphasis => {
     if (node.id === active || node.id === focus) return "focus"
@@ -139,7 +137,8 @@ export default function SkillGraphScene(props: SceneProps) {
             onPointerLeave={() => props.onHover(null)}
             className={cn(
               "pointer-events-auto absolute top-0 left-0 cursor-pointer whitespace-nowrap rounded px-1 text-xs leading-tight transition-colors duration-300 select-none will-change-transform",
-              node.kind === "domain" && "text-[0.7rem] font-semibold uppercase tracking-wider",
+              node.kind === "field" && "text-[0.7rem] font-semibold uppercase tracking-wider",
+              node.kind === "area" && "font-medium",
               node.kind === "project" && "text-[0.7rem] italic",
               emphasis.node[i] === "focus" && "font-semibold text-foreground",
               emphasis.node[i] === "near" && "text-foreground",
@@ -180,7 +179,7 @@ function Graph({ graph, arrangement, focus, hover, filter, colors, reducedMotion
   )
   const colorOf = (i: number) => {
     const node = topology.nodes[i]
-    return node.kind === "domain" ? colors.domain : node.kind === "project" ? colors.project : (colors.groups[node.group ?? 0] ?? colors.edge)
+    return node.kind === "project" ? colors.project : (colors.fields[node.fields[0] ?? 0] ?? colors.edge)
   }
 
   useFrame((_, delta) => {
@@ -226,7 +225,9 @@ function LabelTracker({
   const size = useThree((state) => state.size)
   const controls = useThree((state) => state.controls) as unknown as { target: THREE.Vector3 } | null
 
-  // Labels follow their nodes on screen. Nearer ones sit on top and read louder, which is most of the depth cue.
+  // Labels follow their nodes on screen. Nearer ones sit on top and read louder, which is most of the
+  // depth cue. Like a map, detail comes with closeness: fields always show their names, areas once
+  // nearer, and single skills only up close, in focus or in the filtered field.
   useFrame(() => {
     camera.updateMatrixWorld()
     const pixelsPerUnit = size.height / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)))
@@ -241,12 +242,16 @@ function LabelTracker({
         return
       }
       const x = (point.x * 0.5 + 0.5) * size.width
-      const y = (-point.y * 0.5 + 0.5) * size.height + (topology.radius[i] * (node.kind === "domain" ? 1.9 : 1.5) * pixelsPerUnit) / distance + 2
+      const y = (-point.y * 0.5 + 0.5) * size.height + (topology.radius[i] * (node.kind === "field" ? 1.9 : 1.5) * pixelsPerUnit) / distance + 2
       label.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translateX(-50%)`
       label.style.zIndex = String(Math.round(1000 - distance * 10))
       const depth = THREE.MathUtils.clamp((distance - (middle - RADIUS)) / (2 * RADIUS), 0, 1)
       const level = emphasis[i]
-      label.style.opacity = String(level === "faded" ? 0.2 : level === "rest" ? 1 - depth * 0.6 : 1)
+      const reach = node.kind === "field" ? Infinity : node.kind === "area" ? middle + 2 : middle - 2.5
+      const near = THREE.MathUtils.clamp((reach - distance) / 2, 0, 1)
+      const opacity = level === "focus" || level === "near" ? 1 : level === "faded" ? 0.15 * near : (1 - depth * 0.6) * near
+      label.style.opacity = opacity.toFixed(2)
+      label.style.pointerEvents = opacity > 0.3 ? "auto" : "none"
     })
   })
 
@@ -279,7 +284,7 @@ function NodeMark({
     if (!group.current || !core.current) return
     group.current.position.copy(position)
     const step = ease(8, delta)
-    const scale = emphasis === "focus" ? (node.kind === "domain" ? 1.2 : 1.5) : emphasis === "near" ? 1.15 : 1
+    const scale = emphasis === "focus" ? (node.kind === "field" ? 1.2 : 1.5) : emphasis === "near" ? 1.15 : 1
     group.current.scale.setScalar(THREE.MathUtils.lerp(group.current.scale.x, scale, step))
     core.current.opacity = THREE.MathUtils.lerp(core.current.opacity, nodeOpacity[emphasis], step)
     // The focused node breathes.
@@ -306,19 +311,19 @@ function NodeMark({
 
   return (
     <group ref={group}>
-      {/* Skills are spheres, domains a sphere in a wireframe shell, projects turning diamonds. */}
+      {/* Skills and areas are spheres, fields a sphere in a wireframe shell, projects turning diamonds. */}
       <mesh ref={node.kind === "project" ? spin : undefined}>
         {node.kind === "project" ? <octahedronGeometry args={[radius * 1.3]} /> : <sphereGeometry args={[radius, 24, 24]} />}
         <meshBasicMaterial ref={core} color={color} transparent opacity={0.85} />
       </mesh>
-      {node.kind === "domain" && (
+      {node.kind === "field" && (
         <mesh ref={spin}>
           <icosahedronGeometry args={[radius * 1.8, 1]} />
           <meshBasicMaterial color={color} wireframe transparent opacity={emphasis === "faded" ? 0.05 : 0.22} />
         </mesh>
       )}
-      {/* Domains and projects are drawn in ink colors, which would glow as a smudge on light themes; their shapes mark them instead. */}
-      {node.kind === "skill" && (
+      {/* Projects are drawn in an ink color, which would glow as a smudge on light themes; their shape marks them instead. */}
+      {node.kind !== "project" && (
         <sprite scale={radius * 7}>
           <spriteMaterial ref={halo} map={glow()} color={color} transparent opacity={0.3} depthWrite={false} />
         </sprite>
@@ -439,7 +444,7 @@ function Pulses({
       timer.current -= delta
       if (timer.current <= 0) {
         const source = active ? topology.index.get(active) : undefined
-        const touches = (i: number) => filter === null || topology.nodes[i].group === filter
+        const touches = (i: number) => filter === null || topology.nodes[i].fields.includes(filter)
         const candidates = topology.ends
           .map((ends, edge) => ({ ends, edge }))
           .filter(({ ends: [a, b] }) => (source !== undefined ? a === source || b === source : touches(a) || touches(b)))
@@ -514,10 +519,10 @@ function Rig({
     const orbit = controls.current
     if (!orbit) return
 
-    let distance = 16.5
+    let distance = 17.5
     goal.set(0, 0, 0)
     const focused = focus ? topology.index.get(focus) : undefined
-    const members = filter === null ? [] : positions.filter((_, i) => topology.nodes[i]?.group === filter)
+    const members = filter === null ? [] : positions.filter((_, i) => topology.nodes[i]?.fields.includes(filter))
     if (focused !== undefined) {
       goal.copy(positions[focused])
       distance = 10

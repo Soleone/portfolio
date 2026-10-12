@@ -3,7 +3,7 @@
 import { useReducedMotion } from "motion/react"
 import dynamic from "next/dynamic"
 import { ArrowLeft, ArrowUpRight, Diamond, Footprints, Pause, X } from "lucide-react"
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import { Color } from "three"
 import { useTheme } from "@/components/theme"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,7 @@ import { Kbd } from "@/components/ui/kbd"
 import { Toggle } from "@/components/ui/toggle"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { projects } from "@/lib/portfolio"
-import { buildGraph, neighborsOf, skillsData, type Arrangement, type SkillGraph as Graph, type SkillNode, type SkillsData } from "@/lib/skill-graph"
+import { buildGraph, neighborsOf, slug, type Arrangement, type OutlineRow, type SkillGraph as Graph, type SkillNode } from "@/lib/skill-graph"
 import { cn } from "@/lib/utils"
 import type { GraphColors } from "./skill-graph-scene"
 
@@ -19,24 +19,21 @@ import type { GraphColors } from "./skill-graph-scene"
 const Scene = dynamic(() => import("./skill-graph-scene"), { ssr: false })
 
 const arrangements: { value: Arrangement; label: string; hint: string }[] = [
-  { value: "web", label: "Connections", hint: "Settled by what links to what" },
-  { value: "kind", label: "Kind", hint: "Clustered by kind of skill" },
-  { value: "domain", label: "Domain", hint: "Placed between the domains each one serves" },
+  { value: "map", label: "Map", hint: "Fields round a core, specifics further out" },
+  { value: "web", label: "Web", hint: "Settled only by what connects" },
 ]
 
-// Group colors are the chart tokens, one per skill group (five, then they repeat); domains and
-// projects are drawn in ink colors and told apart by shape.
-export const groupToken = (group: number) => `var(--chart-${(group % 5) + 1})`
-export const tokenOf = (node: Pick<SkillNode, "kind" | "group">) =>
-  node.kind === "domain" ? "var(--foreground)" : node.kind === "project" ? "var(--muted-foreground)" : groupToken(node.group ?? 0)
-const kindOf = (graph: Graph, node: SkillNode) =>
-  node.kind === "domain" ? "Domain" : node.kind === "project" ? `Project · ${node.project?.year}` : (graph.groups[node.group ?? -1]?.label ?? "Skill")
+// Each field takes one of the theme's eight tints; everything in it shares the color. Projects are
+// drawn in an ink color and told apart by shape.
+export const fieldToken = (field: number) => `var(--tint-${(field % 8) + 1})`
+export const tokenOf = (node: Pick<SkillNode, "kind" | "fields">) =>
+  node.kind === "project" ? "var(--muted-foreground)" : fieldToken(node.fields[0] ?? 0)
 
 const WANDER_MS = 2600
 
 // The scene needs real colors, so the tokens are resolved through the browser (which also turns
 // oklch and color-mix into plain sRGB) whenever the theme changes.
-function useGraphColors(groupCount: number): GraphColors | undefined {
+function useGraphColors(fieldCount: number): GraphColors | undefined {
   const { theme, resolvedMode } = useTheme()
   const [colors, setColors] = useState<GraphColors>()
 
@@ -55,13 +52,12 @@ function useGraphColors(groupCount: number): GraphColors | undefined {
       return new Color(`rgb(${r}, ${g}, ${b})`)
     }
     setColors({
-      groups: Array.from({ length: groupCount }, (_, group) => read(groupToken(group))),
-      domain: read("var(--foreground)"),
+      fields: Array.from({ length: fieldCount }, (_, field) => read(fieldToken(field))),
       project: read("var(--muted-foreground)"),
       edge: read("var(--muted-foreground)"),
     })
     probe.remove()
-  }, [theme, resolvedMode, groupCount])
+  }, [theme, resolvedMode, fieldCount])
 
   return colors
 }
@@ -93,19 +89,19 @@ const hasWebGL = () => {
 }
 
 export function SkillGraph({
-  data = skillsData,
+  outline,
   stacked = false,
   selected,
   onFocusChange,
 }: {
-  data?: SkillsData
-  // One column, panel under the stage, for narrow hosts like the editor's preview.
+  outline: OutlineRow[]
+  // One column, panel under the stage, for narrow hosts like the outliner's preview.
   stacked?: boolean
-  // Lets a host (the editor) point the graph at a node, and hear where the visitor walks.
+  // Lets a host (the outliner) point the graph at a node, and hear where the visitor walks.
   selected?: string | null
   onFocusChange?: (id: string | null) => void
 }) {
-  const [arrangement, setArrangement] = useState<Arrangement>("web")
+  const [arrangement, setArrangement] = useState<Arrangement>("map")
   const [withProjects, setWithProjects] = useState(false)
   const [filter, setFilter] = useState<number | null>(null)
   const [trail, setTrail] = useState<string[]>([])
@@ -114,14 +110,13 @@ export function SkillGraph({
   const [webgl, setWebgl] = useState(true)
   const [stage, near] = useNearViewport<HTMLDivElement>()
   const reducedMotion = useReducedMotion() ?? false
-  const graph = useMemo(() => buildGraph(data, projects, { withProjects }), [data, withProjects])
-  const colors = useGraphColors(graph.groups.length)
-  // Nodes can leave the graph (projects switched off, a skill deleted in the editor); the path skips them.
+  const graph = useMemo(() => buildGraph(outline, projects, { withProjects }), [outline, withProjects])
+  const colors = useGraphColors(graph.fields.length)
+  // Nodes can leave the graph (projects switched off, an entry deleted in the outliner); the path skips them.
   const path = useMemo(() => trail.filter((id) => graph.byId.has(id)), [trail, graph])
   const focus = path.at(-1) ?? null
-  const domains = useMemo(() => graph.nodes.filter((node) => node.kind === "domain"), [graph])
-  const latest = useRef({ graph, domains })
-  latest.current = { graph, domains }
+  const latest = useRef(graph)
+  latest.current = graph
 
   useEffect(() => setWebgl(hasWebGL()), [])
 
@@ -169,14 +164,14 @@ export function SkillGraph({
   useEffect(() => {
     if (!wandering) return
     const id = setInterval(() => {
-      const { graph, domains } = latest.current
+      const graph = latest.current
       setTrail((trail) => {
-        const start = domains[Math.floor(Math.random() * domains.length)]
+        const start = graph.fields[Math.floor(Math.random() * graph.fields.length)]
         const here = trail.filter((id) => graph.byId.has(id)).at(-1) ?? start?.id
         if (!here) return trail
         if (!trail.length) return [here]
         const recent = new Set(trail.slice(-5))
-        const options = neighborsOf(graph, here).map(({ id }) => id)
+        const options = neighborsOf(graph, here)
         const fresh = options.filter((id) => !recent.has(id))
         const pool = fresh.length ? fresh : options
         if (!pool.length) return trail
@@ -202,10 +197,10 @@ export function SkillGraph({
   return (
     <div className={cn("flex flex-col gap-4", !stacked && "mt-10")} onKeyDown={onKeyDown}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Highlight a kind of skill">
-          {graph.groups.map((group, index) => (
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Highlight a field">
+          {graph.fields.map((field, index) => (
             <button
-              key={group.id}
+              key={field.id}
               type="button"
               aria-pressed={filter === index}
               onClick={() => {
@@ -219,9 +214,8 @@ export function SkillGraph({
                   : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
-              <span className="size-2 rounded-full" style={{ background: groupToken(index) }} />
-              {group.label}
-              <span className="tabular-nums opacity-60">{graph.nodes.filter((node) => node.group === index).length}</span>
+              <span className="size-2 rounded-full" style={{ background: fieldToken(index) }} />
+              {field.label}
             </button>
           ))}
         </div>
@@ -233,7 +227,7 @@ export function SkillGraph({
             variant="outline"
             size="sm"
             className="px-3 text-xs"
-            title="Show the projects each skill was used in"
+            title="Show the projects built with each thing"
           >
             <Diamond />
             Projects
@@ -244,7 +238,7 @@ export function SkillGraph({
             variant="outline"
             size="sm"
             spacing={0}
-            aria-label="Arrange by"
+            aria-label="Arrange as"
           >
             {arrangements.map((option) => (
               <ToggleGroupItem key={option.value} value={option.value} title={option.hint} className="px-3 text-xs">
@@ -289,7 +283,7 @@ export function SkillGraph({
 
           {path.length > 0 && (
             <nav
-              aria-label="Your path through the graph"
+              aria-label="Your path through the map"
               className="absolute inset-x-3 bottom-3 z-20 flex flex-wrap items-center gap-1 text-xs"
             >
               {path.map((id, index) => (
@@ -322,9 +316,10 @@ export function SkillGraph({
           aria-live="polite"
           className={cn(
             "flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card",
-            stacked ? "max-h-[300px]" : "max-h-[540px]"
+            stacked ? "max-h-[300px] empty:hidden" : "max-h-[540px]"
           )}
         >
+          {/* Stacked, the host has its own intro; the panel only appears for a node. */}
           {focus ? (
             <FocusPanel
               graph={graph}
@@ -341,7 +336,7 @@ export function SkillGraph({
               onWander={() => setWandering(!wandering)}
             />
           ) : (
-            <IntroPanel graph={graph} domains={domains} onSelect={select} onWander={() => setWandering(true)} />
+            !stacked && <IntroPanel graph={graph} onSelect={select} onWander={() => setWandering(true)} />
           )}
         </aside>
       </div>
@@ -349,42 +344,28 @@ export function SkillGraph({
   )
 }
 
-function IntroPanel({
-  graph,
-  domains,
-  onSelect,
-  onWander,
-}: {
-  graph: Graph
-  domains: SkillNode[]
-  onSelect: (id: string) => void
-  onWander: () => void
-}) {
-  const skills = graph.nodes.filter((node) => node.kind === "skill").length
-  const projectCount = graph.nodes.filter((node) => node.kind === "project").length
+function IntroPanel({ graph, onSelect, onWander }: { graph: Graph; onSelect: (id: string) => void; onWander: () => void }) {
+  const things = graph.nodes.filter((node) => node.kind === "skill" || node.kind === "area").length
   return (
     <div className="flex flex-col gap-5 p-5">
       <div className="flex flex-col gap-2">
-        <h3 className="font-semibold tracking-tight">Follow a thread</h3>
+        <h3 className="font-semibold tracking-tight">A map of what I know</h3>
         <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
-          {skills} skills and {domains.length} domains{projectCount > 0 && `, ${projectCount} projects`}, joined by{" "}
-          {graph.edges.length} connections. Every connection has a reason. Pick a node and walk to its neighbours, or
-          rearrange the whole map by kind or by domain.
+          The software world as I see it, with only the parts I have worked in: {things} things across{" "}
+          {graph.fields.length} fields. Fly into a field, then follow what sits inside it.
         </p>
       </div>
-      {domains.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Start from a domain</span>
-          <div className="grid grid-cols-2 gap-2">
-            {domains.map((domain) => (
-              <Button key={domain.id} variant="outline" size="sm" onClick={() => onSelect(domain.id)} className="justify-start">
-                <span className="size-2 rounded-full bg-foreground" />
-                {domain.label}
-              </Button>
-            ))}
-          </div>
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Start somewhere</span>
+        <div className="grid grid-cols-2 gap-2">
+          {graph.fields.map((field, index) => (
+            <Button key={field.id} variant="outline" size="sm" onClick={() => onSelect(field.id)} className="justify-start">
+              <span className="size-2 rounded-full" style={{ background: fieldToken(index) }} />
+              {field.label}
+            </Button>
+          ))}
         </div>
-      )}
+      </div>
       <Button variant="secondary" size="sm" onClick={onWander} className="self-start">
         <Footprints />
         Wander for me
@@ -414,33 +395,37 @@ function FocusPanel({
   onClear: () => void
   onWander: () => void
 }) {
-  // Domains first, then reasoned links, then the rest by name.
-  const links = useMemo(
-    () =>
-      neighborsOf(graph, node.id)
-        .map(({ id, edge }) => ({ node: graph.byId.get(id)!, edge }))
-        .sort(
-          (a, b) =>
-            Number(b.node.kind === "domain") - Number(a.node.kind === "domain") ||
-            Number(!!b.edge.note) - Number(!!a.edge.note) ||
-            a.node.label.localeCompare(b.node.label)
-        ),
-    [graph, node.id]
-  )
+  const nodesOf = (ids: string[]) => ids.map((id) => graph.byId.get(id)!).filter(Boolean)
+  // A project lists what it was built with; anything else lists what sits inside it, and its projects.
+  const inside = nodesOf(node.children)
+  const builtWith = node.kind === "project" ? inside : []
+  const sections = [
+    { title: node.kind === "project" ? "Built with" : "Inside", items: node.kind === "project" ? builtWith : inside.filter((child) => child.kind !== "project") },
+    { title: "Projects", items: node.kind === "project" ? [] : nodesOf(node.parents).filter((parent) => parent.kind === "project") },
+    // Where else it sits, beyond the path shown in the header.
+    { title: "Also part of", items: node.paths.slice(1).map((path) => graph.byId.get(slug(path.at(-1) ?? ""))!).filter(Boolean) },
+  ].filter((section) => section.items.length > 0)
+  const crumbs = node.paths[0] ?? []
 
   return (
     <>
       <div className="flex items-start justify-between gap-3 border-b border-border p-5">
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            <span className="size-2 rounded-full" style={{ background: tokenOf(node) }} />
-            {kindOf(graph, node)}
+          <span className="flex flex-wrap items-center gap-x-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <span className="mr-0.5 size-2 rounded-full" style={{ background: tokenOf(node) }} />
+            {node.kind === "project" && `Project · ${node.project?.year}`}
+            {node.kind === "field" && "Field"}
+            {crumbs.map((label, index) => (
+              <Fragment key={label}>
+                {index > 0 && <span aria-hidden>›</span>}
+                <button type="button" onClick={() => onSelect(slug(label))} className="uppercase transition-colors hover:text-foreground">
+                  {label}
+                </button>
+              </Fragment>
+            ))}
           </span>
           <h3 className="truncate text-xl font-semibold tracking-tight">{node.label}</h3>
-          <span className="text-xs text-muted-foreground">
-            {links.length} {links.length === 1 ? "link" : "links"}
-            {node.projects.length > 0 && ` · ${node.projects.length} project${node.projects.length === 1 ? "" : "s"}`}
-          </span>
+          {node.project && <p className="text-pretty text-sm leading-relaxed text-muted-foreground">{node.project.description}</p>}
         </div>
         <div className="flex shrink-0 gap-1">
           <Button variant="ghost" size="icon-sm" onClick={onWander} aria-label={wandering ? "Stop wandering" : "Wander from here"} title={wandering ? "Stop wandering" : "Wander from here"}>
@@ -455,42 +440,40 @@ function FocusPanel({
         </div>
       </div>
 
-      {node.project && (
-        <p className="border-b border-border px-5 py-3 text-pretty text-sm leading-relaxed text-muted-foreground">
-          {node.project.description}
-        </p>
-      )}
-
-      <ul className="flex min-h-0 flex-1 flex-col overflow-y-auto p-2">
-        {links.map(({ node: next, edge }) => {
-          // A project's own edges name it; that says nothing new from either end.
-          const together = edge.projects.filter((title) => title !== node.label && title !== next.label)
-          const why = [edge.note, together.length > 0 && `Together in ${together.join(", ")}`].filter(Boolean)
-          return (
-            <li key={next.id}>
-              <button
-                type="button"
-                onClick={() => onSelect(next.id)}
-                onPointerEnter={() => onHover(next.id)}
-                onPointerLeave={() => onHover(null)}
-                onFocus={() => onHover(next.id)}
-                onBlur={() => onHover(null)}
-                className="group flex w-full items-start gap-2.5 rounded-lg px-3 py-2 text-left transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
-              >
-                <span className="mt-1.5 size-2 shrink-0 rounded-full" style={{ background: tokenOf(next) }} />
-                <span className="flex min-w-0 flex-col">
-                  <span className="text-sm font-medium">{next.label}</span>
-                  {why.map((line) => (
-                    <span key={line as string} className="text-pretty text-xs leading-snug text-muted-foreground">
-                      {line}
-                    </span>
-                  ))}
-                </span>
-              </button>
-            </li>
-          )
-        })}
-      </ul>
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
+        {sections.map((section) => (
+          <div key={section.title} className="flex flex-col gap-2">
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{section.title}</span>
+            <div className="flex flex-wrap gap-1.5">
+              {section.items.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onSelect(item.id)}
+                  onPointerEnter={() => onHover(item.id)}
+                  onPointerLeave={() => onHover(null)}
+                  onFocus={() => onHover(item.id)}
+                  onBlur={() => onHover(null)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs transition-colors hover:bg-muted",
+                    item.kind === "project" && "italic"
+                  )}
+                >
+                  <span className="size-1.5 rounded-full" style={{ background: tokenOf(item) }} />
+                  {item.label}
+                  {/* How much more there is to find in there. */}
+                  {item.children.length > 0 && item.kind !== "project" && (
+                    <span className="tabular-nums text-muted-foreground">{item.children.length}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+        {sections.length === 0 && node.projects.length === 0 && (
+          <p className="text-sm text-muted-foreground">Nothing further in here.</p>
+        )}
+      </div>
 
       {(node.project || node.projects.length > 0) && (
         <div className="flex flex-col gap-2 border-t border-border p-4">
@@ -527,7 +510,7 @@ function FocusPanel({
   )
 }
 
-// Without WebGL the graph is a flat list in the same colors; the panel still walks it.
+// Without WebGL the map is a flat list in the same colors; the panel still walks it.
 function FlatGraph({
   graph,
   focus,
@@ -539,7 +522,7 @@ function FlatGraph({
   filter: number | null
   onSelect: (id: string) => void
 }) {
-  const near = new Set(focus ? neighborsOf(graph, focus).map(({ id }) => id) : [])
+  const near = new Set(focus ? neighborsOf(graph, focus) : [])
   return (
     <div className="flex h-full flex-wrap content-center justify-center gap-2 overflow-y-auto p-6">
       {graph.nodes.map((node) => (
@@ -549,8 +532,9 @@ function FlatGraph({
           onClick={() => onSelect(node.id)}
           className={cn(
             "inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs transition-opacity",
+            node.kind === "field" && "font-semibold uppercase",
             node.id === focus && "border-primary text-foreground",
-            (focus ? node.id !== focus && !near.has(node.id) : filter !== null && node.group !== filter) && "opacity-30"
+            (focus ? node.id !== focus && !near.has(node.id) : filter !== null && !node.fields.includes(filter)) && "opacity-30"
           )}
         >
           <span className="size-2 rounded-full" style={{ background: tokenOf(node) }} />

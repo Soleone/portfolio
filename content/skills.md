@@ -1,0 +1,156 @@
+<!--
+The skills map on the site: the world as I see it, holding only what I have worked with.
+Nesting places a thing in the world and draws its edges. A name that appears in two places is one
+node under both parents. Edit by hand or in the outliner at /skills (development only).
+-->
+
+- Languages
+  - Ruby
+    - Gems
+  - JavaScript
+    - TypeScript
+    - CoffeeScript
+  - Python
+  - C++
+  - C#
+  - Java
+  - Rust
+  - SQL
+  - Shell
+  - QML
+- Web
+  - Frontend
+    - React
+      - Next.js
+      - Remix
+      - React Three Fiber
+    - Vue
+      - Vuetify
+    - Styling
+      - CSS
+      - Tailwind CSS
+      - shadcn/ui
+      - Radix UI
+      - Material UI
+    - Motion
+      - Framer Motion
+      - Three.js
+    - Editors in the browser
+      - CodeMirror
+      - Monaco
+      - xterm.js
+    - Build tools
+      - Vite
+      - webpack
+      - esbuild
+  - Backend
+    - Rails
+    - Node.js
+    - Remix
+    - GraphQL
+    - Data
+      - SQL
+      - MySQL
+      - Prisma
+      - Firebase
+    - APIs
+      - REST
+      - OAuth
+      - WebSocket
+      - Twilio
+  - Hosting
+    - Vercel
+    - Heroku
+    - GitHub Pages
+    - AWS S3
+  - Browser
+    - Chrome extensions
+    - Web Audio
+- Apps
+  - Desktop
+    - Electron
+    - Tauri
+    - QML
+  - Mobile
+    - React Native
+  - Terminal
+    - CLI
+    - TUI
+    - Zellij
+  - Local-first
+- Games
+  - Engines
+    - Unreal Engine
+      - C++
+    - Three.js
+  - Genres
+    - Rhythm games
+    - Puzzle games
+    - Card games
+    - RPGs
+    - Souls-likes
+  - VR
+  - Game audio
+    - Web Audio
+  - Game APIs
+- AI
+  - Coding agents
+    - Pi agent
+      - Pi extensions
+    - Claude Code
+    - Cursor
+  - Models
+    - Claude
+  - Agent design
+    - Skills
+    - Subagents
+    - Memory
+    - Prompting
+  - AI SDK
+  - Speech
+    - Text to speech
+    - Speech to text
+- Commerce
+  - Shopify
+    - Payments
+    - Shop app
+      - React Native
+    - Admin
+    - Liquid
+    - Shopify API
+- Blockchain
+  - NFTs
+  - Smart contracts
+    - EOS
+  - Web3 games
+    - Gods Unchained
+- Tooling
+  - Git
+    - GitHub
+  - Unix
+    - Linux
+      - Debian
+        - Ubuntu
+      - Omarchy
+    - macOS
+    - Shell
+  - Docker
+    - Podman
+  - Testing
+    - Playwright
+    - Vitest
+    - Jest
+    - Testing Library
+    - Storybook
+    - Puppeteer
+  - Releases
+    - semantic-release
+    - Changesets
+    - release-it
+  - Notes
+    - Obsidian
+    - Logseq
+  - Media
+    - ffmpeg
+    - yt-dlp
+    - Remotion
