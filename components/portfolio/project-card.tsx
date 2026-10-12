@@ -213,12 +213,15 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
         } as CSSProperties
       }
     >
-      {/* Its own layer, so moving or fading the shadow never repaints it. */}
-      <motion.div
-        aria-hidden
-        className="absolute inset-x-[calc(7%-60px)] top-[calc(10%-60px)] -bottom-[60px] will-change-[transform,opacity]"
-        style={{ x: shadowX, y: shadowY, scaleX: shadowScaleX, opacity: shadowOpacity, background: softShadow }}
-      />
+      {/* Sized from the card, not the padded wrapper: a shadow reaching past the gap would paint over the
+          neighbor, because each wrapper is its own stacking context and later cards paint on top. Lighter on
+          light themes, where black reads as dirt. Its own layer, so moving or fading it never repaints. */}
+      <div aria-hidden className="pointer-events-none absolute inset-28 opacity-45 dark:opacity-100">
+        <motion.div
+          className="absolute -inset-x-3 top-[12%] -bottom-10 will-change-[transform,opacity]"
+          style={{ x: shadowX, y: shadowY, scaleX: shadowScaleX, opacity: shadowOpacity, background: softShadow }}
+        />
+      </div>
 
       <div
         ref={hitRef}
