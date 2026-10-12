@@ -22,6 +22,7 @@ export type CardProject = {
   details?: string // the back's longer copy; the front already shows the pitch
   year: string
   type: string
+  stage?: string | null
   tech: string[]
   repo: string
   live?: string
@@ -29,6 +30,13 @@ export type CardProject = {
   icon?: string
   glyph: ReactNode // a rendered icon, so server components can pass it
   tint: number // 1..8, which --tint-* token colors this card
+}
+
+// Stage colors are fixed across themes: green is shipped, yellow is a proof of concept, red is the least finished.
+const stagePills: Record<string, string> = {
+  product: "bg-emerald-500/15 text-emerald-700 ring-emerald-500/30 dark:text-emerald-300",
+  "proof of concept": "bg-amber-400/20 text-amber-800 ring-amber-500/30 dark:text-amber-300",
+  prototype: "bg-red-500/15 text-red-700 ring-red-500/30 dark:text-red-300",
 }
 
 const spring = (stiffness: number, damping: number) => ({ type: "spring" as const, stiffness, damping })
@@ -242,6 +250,13 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
                 <span>{project.type}</span>
                 <span className="size-1 rounded-full bg-current opacity-40" />
                 <span className="tabular-nums">{project.year}</span>
+                {project.stage && (
+                  <span
+                    className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide ring-1 normal-case ${stagePills[project.stage] ?? "bg-foreground/[0.06] ring-foreground/10"}`}
+                  >
+                    {project.stage}
+                  </span>
+                )}
               </div>
               <h3 className="mt-1.5 truncate text-xl font-semibold tracking-tight">{project.title}</h3>
               <p className="mt-1.5 line-clamp-3 h-[4.875em] text-sm leading-relaxed text-pretty text-muted-foreground">

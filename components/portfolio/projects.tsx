@@ -66,6 +66,7 @@ export function toCardProject(project: Project, index: number): CardProject {
     details: project.details,
     year: project.year,
     type: project.type,
+    stage: project.stage,
     tech: project.tech,
     repo: project.href,
     live: project.live,
