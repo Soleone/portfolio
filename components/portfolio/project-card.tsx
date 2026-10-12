@@ -276,7 +276,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
               </p>
             </div>
 
-            <div className="flex items-center gap-2 px-5 pb-5" style={layer(1)}>
+            <div className="flex items-center gap-2 pr-1.5 pb-3.5 pl-5" style={layer(1)}>
               {project.live && (
                 <a
                   href={project.live}
@@ -313,7 +313,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
 
           {/* Back */}
           <Face className="absolute inset-0" style={{ ...surface, transform: "rotateY(180deg)" }} hidden={!showingBack}>
-            <div className="flex flex-1 flex-col p-6" style={layer(0.55)}>
+            <div className="flex flex-1 flex-col px-5 py-6" style={layer(0.55)}>
               <div className="flex items-center gap-3">
                 <div className="grid size-11 place-items-center rounded-xl bg-foreground/[0.06]">
                   {project.icon ? (
@@ -342,7 +342,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
                 ))}
               </div>
             </div>
-            <div className="flex items-center gap-2 px-6 pb-6" style={layer(1)}>
+            <div className="flex items-center gap-2 pr-1.5 pb-3.5 pl-5" style={layer(1)}>
               <a
                 href={project.repo}
                 target="_blank"
