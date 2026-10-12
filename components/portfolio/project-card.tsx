@@ -103,6 +103,11 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
   const rimOpacity = useTransform(shine, [0, 1], [0.25, 1])
   const sheen = { glareX, glareY, rimAngle, shine, rimOpacity, glare: t.glare, rim: t.rim, rimWidth: t.rimWidth }
 
+  // Clicking the GitHub link collects it like a coin: it hops up while spinning once. The spin is a squash
+  // on X, not a rotateY, so the card's backface-hidden layers never blank it out halfway through a turn.
+  const coinSpin = useMotionValue(0)
+  const coinY = useMotionValue(0)
+  const coinScaleX = useTransform(coinSpin, (deg) => Math.cos((deg * Math.PI) / 180))
 
   const follow = spring(t.followStiffness, t.followDamping)
   const release = spring(t.releaseStiffness, t.releaseDamping)
@@ -163,6 +168,19 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
     if (!pressed.current) return
     pressed.current = false
     animate(lift, hovered.current ? 1 : 0, pop)
+  }
+
+  const collect = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (reduced) return
+    coinSpin.set(0)
+    animate(coinSpin, 360, { duration: 0.45, ease: "easeOut" })
+    animate(coinY, [0, -12, 0], { duration: 0.45, times: [0, 0.4, 1], ease: ["easeOut", "easeIn"] })
+    // The new tab takes focus at once and would hide the coin, so a plain click opens it once the coin lands.
+    // Modified clicks open a background tab anyway and keep their native behavior.
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    event.preventDefault()
+    const href = event.currentTarget.href
+    setTimeout(() => window.open(href, "_blank", "noreferrer"), 450)
   }
 
   const turn = () => {
@@ -293,9 +311,12 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
                 target="_blank"
                 rel="noreferrer"
                 aria-label={`${project.title} source code`}
+                onClick={collect}
                 className="grid size-8 place-items-center rounded-full bg-foreground/[0.06] transition-colors hover:bg-foreground/10"
               >
-                <GithubIcon className="size-4" />
+                <motion.span className="block" style={{ scaleX: coinScaleX, y: coinY }}>
+                  <GithubIcon className="size-4" />
+                </motion.span>
               </a>
               {t.flip && (
                 <button
