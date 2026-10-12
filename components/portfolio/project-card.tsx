@@ -10,7 +10,7 @@ import {
 } from "motion/react"
 import { ArrowUpRight, Play, RotateCcw } from "lucide-react"
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react"
-import { Sheen, grain } from "@/components/soleone/sheen"
+import { Sheen, grain } from "@/components/soleone/material/sheen"
 import type { ProjectMedia } from "@/lib/showcase"
 import { useTuning } from "./card-tuning"
 import { collectCoin } from "./coins"

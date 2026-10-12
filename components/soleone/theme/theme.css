@@ -1,12 +1,10 @@
-@import "./showcase.css";
-
 /*
- * Themes. Each palette theme (registry.ts) sets the --om-* slots below on any [data-theme]
+ * Themes. Each palette theme (head.ts) sets the --om-* slots below on any [data-theme]
  * element, from CSS generated in the root layout: <html> for the page, or a single element
  * that should draw in another theme (the theme picker's preview cards). The mapping is
  * declared on every [data-theme] so tokens resolve against that element's own slots. It sits
- * in :where() at zero specificity, so the palette blocks and the showcase theme
- * (showcase.css), which writes the region tokens itself, always win. Components only
+ * in :where() at zero specificity, so the palette blocks and any hand-written theme
+ * (a CssTheme, which writes the region tokens itself) always win. Components only
  * ever see the region tokens, so a theme never has to know they exist.
  *
  * Two names collide with omarchy and are mapped deliberately: its `accent` is the brand color,
@@ -77,10 +75,14 @@
   --border: color-mix(in oklab, var(--om-muted) 55%, transparent);
 }
 
-/* The theme picker reveals a new theme through a growing circle it animates itself
-   (picker.tsx), so the default cross-fade stays off while it runs. */
+/* A new theme spreads through a growing circle that revealTheme (reveal.ts) animates itself,
+   so the default cross-fade stays off while it runs. */
 html.theme-reveal::view-transition-old(root),
 html.theme-reveal::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
+}
+
+@theme inline {
+  --color-success: var(--success);
 }

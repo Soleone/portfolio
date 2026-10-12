@@ -1,5 +1,5 @@
 /**
- * The per-site choices. Everything else in this folder is the same from one project to the next.
+ * The per-site choices for the theme kit (components/soleone/theme, from the soleone registry).
  */
 
 /** The theme a first visit gets, and the one the server renders. */

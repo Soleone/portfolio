@@ -13,7 +13,6 @@ import {
   type MotionValue,
 } from "motion/react"
 import { Palette, X } from "lucide-react"
-import { flushSync } from "react-dom"
 import {
   memo,
   useEffect,
@@ -29,10 +28,9 @@ import {
 import { Button } from "@/components/ui/button"
 import { Kbd } from "@/components/ui/kbd"
 import { cn } from "@/lib/utils"
-import type { ThemeOption } from "./palette"
+import { isInteractiveTarget, revealTheme, useTheme, type ThemeOption } from "@/components/soleone/theme"
 import { ThemePreviewCard } from "./preview-card"
-import { isInteractiveTarget, useTheme } from "./provider"
-import { Sheen } from "@/components/soleone/sheen"
+import { Sheen } from "@/components/soleone/material/sheen"
 
 // The ring. Cards stand on a cylinder seen from outside: the front card faces the viewer and its
 // neighbours turn away as they curve back. Spacing is the arc between card centers at the front;
@@ -46,7 +44,6 @@ const FRONT_LIFT = 0.07 // extra scale for the front card
 const PERSPECTIVE = 1100 // px
 const TILT = 10 // degrees the front card leans toward the pointer at its edge
 const RING_SLOTS = 24 // the fewest cards the ring is sized for
-const REVEAL_MS = 750 // how long the chosen theme takes to spread over the page
 const KEY_PRESS_MS = 140 // how long Enter holds the Select button down
 
 const spring = (stiffness: number, damping: number) => ({ type: "spring" as const, stiffness, damping })
@@ -88,28 +85,6 @@ const stretch = (value: number, count: number) => {
   if (loops(count)) return value
   const edge = clamp(value, count)
   return edge + (value - edge) * RUBBER
-}
-
-// Confirming spreads the new theme over the page from the chosen card: a circle that grows until it
-// covers the far corner. A View Transition snapshots the page in the old theme and shows the new
-// one through the circle (theme.css turns its default cross-fade off). Without View Transitions,
-// or with reduced motion, the theme just switches.
-export function revealTheme(apply: () => void, origin: { x: number; y: number } | undefined, reduced: boolean) {
-  if (reduced || !origin || !("startViewTransition" in document)) return apply()
-  const root = document.documentElement
-  root.classList.add("theme-reveal")
-  const transition = document.startViewTransition(() => flushSync(apply))
-  const { x, y } = origin
-  const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y))
-  transition.ready
-    .then(() =>
-      root.animate(
-        { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
-        { duration: REVEAL_MS, easing: "cubic-bezier(0.65, 0, 0.35, 1)", pseudoElement: "::view-transition-new(root)" },
-      ),
-    )
-    .catch(() => {})
-  transition.finished.finally(() => root.classList.remove("theme-reveal"))
 }
 
 export function ThemePicker() {

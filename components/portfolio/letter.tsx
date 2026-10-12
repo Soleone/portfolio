@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { profile } from "@/lib/portfolio"
 import { sendMail, type SendResult } from "@/app/actions/send-mail"
-import { grain } from "@/components/soleone/sheen"
+import { grain } from "@/components/soleone/material/sheen"
 
 type Draft = { name: string; email: string; message: string }
 const blank: Draft = { name: "", email: "", message: "" }

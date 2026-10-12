@@ -45,9 +45,7 @@
         "components/portfolio/letter.tsx",
         "components/portfolio/project-card.tsx",
         "components/portfolio/skill-graph-scene.tsx",
-        "components/soleone/**",
-        "components/theme/preview-card.tsx",
-        "components/theme/picker.tsx"
+        "components/soleone/**"
       ],
       "rules": {
         "shadcn/no-inline-styles": "off"

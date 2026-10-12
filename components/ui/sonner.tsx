@@ -1,6 +1,6 @@
 "use client"
 
-import { useTheme } from "@/components/theme"
+import { useTheme } from "@/components/soleone/theme"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 

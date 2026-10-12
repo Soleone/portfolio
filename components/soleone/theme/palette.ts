@@ -1,3 +1,5 @@
+export type ThemeMode = "dark" | "light" | "system";
+
 /**
  * Theme palettes in the omarchy `colors.toml` format.
  *
@@ -9,8 +11,6 @@
  * is the brand color (our `--primary` and focus ring), while shadcn `--accent` is a quiet
  * hover surface and takes omarchy `selection`.
  */
-
-export type ThemeMode = "dark" | "light" | "system";
 
 /** Canonical omarchy slot name to hex color, for example `dark_background`. */
 export type ThemePalette = Record<string, string>;

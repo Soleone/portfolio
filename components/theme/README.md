@@ -1,52 +1,25 @@
-# Theme kit
+# Site themes
 
-Palette themes, the provider that applies them, and the picker in the header. Everything lives in
-this folder so it can be copied into another project.
+The theme kit itself comes from the soleone shadcn registry
+([Soleone/shadcn-components](https://github.com/Soleone/shadcn-components)) and is installed under
+`components/soleone/`:
 
-## Files
+- `theme`: palette parser, built-in palettes, the head builder, `ThemeProvider` / `useTheme` (D flips dark
+  and light), `revealTheme`, and `theme.css` mapping the palette slots onto the shadcn tokens.
+- `theme-picker`: `ThemePicker`, the palette button and the 3D card ring it opens (T opens it from anywhere).
+- `material`: the grain, glare and rim light, and the shadow and type tokens (`material.css`).
 
-- `config.ts`: the per-site choices (default theme, storage key, where D lands). Usually the only file to edit.
-- `builtin.ts`: the palettes, in omarchy `colors.toml` format. Add a theme by pasting one in.
-- `palette.ts`: parses a palette and derives the slots it leaves out. Pure, so it runs on the server.
-- `registry.ts`: server only. Builds the CSS block per theme and the script that applies the stored
-  choice before first paint.
-- `theme.css`: maps the palette slots (`--om-*`) onto the shadcn tokens on any `[data-theme]` element,
-  plus the rule the picker's reveal animation needs.
-- `showcase.css`: a hand-written theme (this site's original design). Delete it, its `@import` in
-  `theme.css` and `SHOWCASE_THEME` in `builtin.ts` if you don't need it.
-- `provider.tsx`: `ThemeProvider`, `useTheme` and the D hotkey (flip dark and light).
-- `picker.tsx`: `ThemePicker`, the palette button and the 3D card ring it opens (T opens it from anywhere).
-- `preview-card.tsx`: a card that draws one theme in its own tokens, whatever the page is in.
-- `index.ts`: client exports. Server code imports `./registry` directly.
+Update them with `pnpm dlx shadcn add @soleone/theme-picker --overwrite` (answer no for `button` and `kbd`,
+which are customized here). Change them in the registry, not here.
 
-## Moving it to another project
+This folder holds only what is particular to this site:
 
-It expects Next (App Router), React 19, Tailwind v4 with shadcn's tokens, and these packages:
-`@base-ui/react`, `motion`, `lucide-react`. Outside this folder it uses shadcn's `Button` and `Kbd`
-(`@/components/ui`), `cn` (`@/lib/utils`) and the card material from the soleone registry
-(`pnpm dlx shadcn add @soleone/material`, installed at `components/soleone/sheen.tsx`).
+- `config.ts`: the default theme, storage key, and where D lands.
+- `themes.ts`: the site's own themes on top of the built-in palettes: Game Boy (hidden; the Konami code
+  unlocks it) and showcase (the original design, hand-written in `showcase.css`).
+- `head.ts`: server only. Builds the per-theme CSS and pre-paint script the root layout inlines.
 
-1. Copy the folder and set `config.ts`.
-2. In the global CSS, `@import` `theme.css` after Tailwind, and keep shadcn's `@theme inline` block and
-   `@custom-variant dark (&:is(.dark *));`.
-3. In the root layout, render the head and wrap the app:
-
-```tsx
-import { ThemeProvider } from "@/components/theme"
-import { DEFAULT_THEME, THEME_STORAGE_KEY, defaultThemeIsDark, themeOptions, themeScript, themeStyles } from "@/components/theme/registry"
-
-<html suppressHydrationWarning data-theme={DEFAULT_THEME} className={defaultThemeIsDark ? "dark" : undefined}>
-  <head>
-    <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
-    <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-  </head>
-  <body>
-    <ThemeProvider themes={themeOptions} storageKey={THEME_STORAGE_KEY}>{children}</ThemeProvider>
-  </body>
-</html>
-```
-
-4. Put `<ThemePicker />` in the header.
+`app/globals.css` imports `showcase.css`, then the kit's `theme.css` and `material.css`.
 
 Components should only use the tokens (`bg-background`, `text-primary`, `var(--tint-1)`...), never fixed
 colors or `dark:` variants for theme colors, so every theme works without knowing about them.

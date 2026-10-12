@@ -2,9 +2,8 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 import { useEffect, useRef, useSyncExternalStore } from "react"
-import { isInteractiveTarget, useTheme } from "@/components/theme"
+import { isInteractiveTarget, revealTheme, useTheme } from "@/components/soleone/theme"
 import { DEFAULT_THEME } from "@/components/theme/config"
-import { revealTheme } from "@/components/theme/picker"
 
 const KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"]
 const SECRET_THEME = "game-boy"

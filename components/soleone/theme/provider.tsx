@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { HOTKEY_FALLBACKS } from "./config"
 import type { ThemeMode, ThemeOption } from "./palette"
 
 type ThemeContextValue = {
@@ -41,13 +40,19 @@ function withoutTransitions(change: () => void) {
   setTimeout(() => style.remove(), 1)
 }
 
+type HotkeyFallbacks = { dark: string; light: string }
+
 function ThemeProvider({
   themes,
   storageKey,
+  hotkeyFallbacks,
   children,
 }: {
   themes: ThemeOption[]
+  /** Where the visitor's choice is remembered in localStorage; the same key the head script reads. */
   storageKey: string
+  /** Where D lands on a side (dark or light) the visitor has not picked a theme on yet. */
+  hotkeyFallbacks: HotkeyFallbacks
   children: React.ReactNode
 }) {
   const theme = React.useSyncExternalStore(subscribe, readTheme, readNothing)
@@ -99,7 +104,7 @@ function ThemeProvider({
 
   return (
     <ThemeContext value={value}>
-      <ThemeHotkey />
+      <ThemeHotkey fallbacks={hotkeyFallbacks} />
       {children}
     </ThemeContext>
   )
@@ -113,7 +118,7 @@ function useTheme() {
 
 // D flips between dark and light. Each side remembers the theme last used there, so a visitor
 // who picked Nord and pressed D twice lands back on Nord; the first flip from a side they never
-// chose goes to the fallbacks in config.ts.
+// chose goes to the fallbacks the provider was given.
 
 /** Whether a keystroke belongs to what the visitor is typing in, so single-key shortcuts leave it alone. */
 function isInteractiveTarget(target: EventTarget | null) {
@@ -131,7 +136,7 @@ function isInteractiveTarget(target: EventTarget | null) {
   )
 }
 
-function ThemeHotkey() {
+function ThemeHotkey({ fallbacks }: { fallbacks: HotkeyFallbacks }) {
   const { theme, resolvedMode, themes, setTheme } = useTheme()
   const remembered = React.useRef<Partial<Record<"dark" | "light", string>>>({})
   const mode = themes.find((candidate) => candidate.name === theme)?.mode
@@ -149,13 +154,13 @@ function ThemeHotkey() {
       if (isInteractiveTarget(event.target)) return
 
       const other = resolvedMode === "dark" ? "light" : "dark"
-      const target = remembered.current[other] ?? HOTKEY_FALLBACKS[other]
+      const target = remembered.current[other] ?? fallbacks[other]
       if (themes.some((candidate) => candidate.name === target)) setTheme(target)
     }
 
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [resolvedMode, themes, setTheme])
+  }, [resolvedMode, themes, setTheme, fallbacks])
 
   return null
 }
