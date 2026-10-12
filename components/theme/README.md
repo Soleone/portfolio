@@ -9,8 +9,7 @@ The theme kit itself comes from the soleone shadcn registry
 - `theme-picker`: `ThemePicker`, the palette button and the 3D card ring it opens (T opens it from anywhere).
 - `material`: the grain, glare and rim light, and the shadow and type tokens (`material.css`).
 
-Update them with `pnpm dlx shadcn add @soleone/theme-picker --overwrite` (answer no for `button` and `kbd`,
-which are customized here). Change them in the registry, not here.
+Update them with `pnpm dlx shadcn add @soleone/theme-picker --overwrite`. Change them in the registry, not here.
 
 This folder holds only what is particular to this site:
 
