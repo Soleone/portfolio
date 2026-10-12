@@ -1,6 +1,6 @@
-// A spring sampled into a CSS linear() easing. A transition with this easing runs on the compositor,
-// so it stays smooth while the main thread is busy hydrating or decoding, which a JS-driven spring is not.
 export function springEasing(stiffness: number, damping: number, mass = 1) {
+  // A spring sampled into a CSS linear() easing. A transition with this easing runs on the compositor,
+  // so it stays smooth while the main thread is busy hydrating or decoding, which a JS-driven spring is not.
   const omega = Math.sqrt(stiffness / mass)
   const zeta = damping / (2 * Math.sqrt(stiffness * mass))
   const decay = zeta * omega

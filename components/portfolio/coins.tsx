@@ -1,7 +1,7 @@
 "use client"
 
-import { motion, useReducedMotion } from "motion/react"
-import { useSyncExternalStore } from "react"
+import { animate, motion, useMotionValue, useReducedMotion, useTransform } from "motion/react"
+import { useSyncExternalStore, type MouseEvent, type ReactNode } from "react"
 
 // Coins are the GitHub links visitors click on the project cards. The count lives in memory, so it lasts one visit.
 let coins = 0
@@ -41,5 +41,52 @@ export function CoinCounter() {
       </motion.span>
       <span className="sr-only">Projects checked out:</span>×{count}
     </motion.div>
+  )
+}
+
+// A link that collects a coin when it is clicked: the whole link hops up while spinning once. The spin is a squash
+// on X, not a rotateY, so a 3D card's backface-hidden layers never blank it out halfway through a turn.
+export function CoinLink({
+  href,
+  className,
+  children,
+  "aria-label": label,
+}: {
+  href: string
+  className?: string
+  children: ReactNode
+  "aria-label"?: string
+}) {
+  const reduced = useReducedMotion() ?? false
+  const spin = useMotionValue(0)
+  const y = useMotionValue(0)
+  const scaleX = useTransform(spin, (deg) => Math.cos((deg * Math.PI) / 180))
+
+  const collect = (event: MouseEvent<HTMLAnchorElement>) => {
+    collectCoin()
+    if (reduced) return
+    spin.set(0)
+    animate(spin, 360, { duration: 0.45, ease: "easeOut" })
+    animate(y, [0, -12, 0], { duration: 0.45, times: [0, 0.4, 1], ease: ["easeOut", "easeIn"] })
+    // The new tab takes focus at once and would hide the coin, so a plain click opens it once the coin lands.
+    // Modified clicks open a background tab anyway and keep their native behavior.
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    event.preventDefault()
+    const target = event.currentTarget.href
+    setTimeout(() => window.open(target, "_blank", "noreferrer"), 450)
+  }
+
+  return (
+    <motion.a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={label}
+      onClick={collect}
+      style={{ scaleX, y }}
+      className={className}
+    >
+      {children}
+    </motion.a>
   )
 }
