@@ -1,70 +1,6 @@
 {
   "projects": [
     {
-      "id": "local:products/logdig",
-      "priority": "high",
-      "title": "logdig",
-      "pitch": "Turn your coding agent history into a daily journal you can read.",
-      "description": "Backfill a week of work in parallel, keep the short version in your notes and click a timestamp for the details. Your handwritten notes are never overwritten, and it works with Obsidian or plain Markdown.",
-      "kind": "cli",
-      "stage": "product",
-      "year": 2026,
-      "repo": "https://github.com/Soleone/logdig",
-      "live": "https://logdig.soleone.xyz",
-      "demo": {
-        "strategy": "browser-terminal",
-        "local": "npm run demo",
-        "externals": [
-          {
-            "name": "LLM summaries via Pi",
-            "type": "model",
-            "seam": "piCommand setting (Pi JSON event stream)",
-            "standIn": "canned",
-            "note": "Sessions are synthetic and a stand-in for Pi returns canned summaries, so nothing is sent to a model."
-          }
-        ]
-      },
-      "media": {
-        "hero": "media/products-logdig/hero.png",
-        "motion": "media/products-logdig/motion.webp",
-        "video": "media/products-logdig/video.mp4",
-        "capture": "npm run demo:capture"
-      },
-      "tier": "S",
-      "target": "S",
-      "gap": [],
-      "source": "showcase.json"
-    },
-    {
-      "id": "local:pi/pi-tasks",
-      "priority": null,
-      "title": "pi-tasks",
-      "pitch": "Task management extension for the pi coding agent, designed for pluggable task backends.",
-      "kind": "agent-extension",
-      "year": 2026,
-      "repo": "https://github.com/Soleone/pi-tasks",
-      "media": {
-        "hero": "https://github.com/user-attachments/assets/af210b63-f993-447d-9668-3308874d493c"
-      },
-      "tier": "C",
-      "target": null,
-      "gap": [],
-      "source": "draft"
-    },
-    {
-      "id": "local:pi/pi-git",
-      "priority": null,
-      "title": "pi-git",
-      "pitch": "A fresh pi extension for Git workflows. The replacement keeps the main pi editor usable while a quick commit is generated and checked in the background.",
-      "kind": "agent-extension",
-      "year": 2026,
-      "repo": "https://github.com/Soleone/pi-git",
-      "tier": "C",
-      "target": null,
-      "gap": [],
-      "source": "draft"
-    },
-    {
       "id": "local:products/vibestep",
       "priority": "high",
       "title": "Vibestep",
@@ -104,6 +40,192 @@
       "target": "S",
       "gap": [],
       "source": "showcase.json"
+    },
+    {
+      "id": "local:products/better-youtube",
+      "priority": "high",
+      "title": "Better Youtube",
+      "pitch": "Add any YouTube video to your favorite playlists in one click, straight from Home or Subscriptions.",
+      "description": "Every add turns into an Undo button, a Playlists entry in the sidebar jumps to your favorites, and playlist pages get a Remove button. A bundled demo runs without a YouTube account.",
+      "kind": "browser-extension",
+      "stage": "product",
+      "year": 2026,
+      "repo": "https://github.com/Soleone/better-youtube",
+      "demo": {
+        "local": "npm run demo",
+        "externals": [
+          {
+            "name": "YouTube home page",
+            "type": "service",
+            "seam": "--host-resolver-rules points www.youtube.com at the demo server",
+            "standIn": "simulated",
+            "note": "A synthetic copy of the home page layout with invented videos. It is not YouTube."
+          },
+          {
+            "name": "YouTube playlist API",
+            "type": "service",
+            "seam": "window.fetch on the page: the bridge posts to /youtubei/v1/browse/edit_playlist, which the demo page answers itself",
+            "standIn": "canned",
+            "note": "Playlist changes are answered locally and never reach YouTube."
+          },
+          {
+            "name": "Signed-in YouTube account",
+            "type": "account",
+            "seam": "the SAPISID cookie and ytcfg the page provides to the bridge",
+            "standIn": "simulated",
+            "note": "The demo sets a fake login cookie. No account is used."
+          }
+        ]
+      },
+      "media": {
+        "hero": "media/products-better-youtube/hero.png",
+        "motion": "media/products-better-youtube/motion.webp",
+        "capture": "npm run media:capture"
+      },
+      "tier": "A",
+      "target": "A",
+      "gap": [],
+      "source": "showcase.json"
+    },
+    {
+      "id": "local:products/podcaster",
+      "priority": "high",
+      "title": "Podcaster",
+      "pitch": "Talk to a podcast companion with your microphone and hear it answer out loud.",
+      "description": "Speech recognition and voice synthesis run on your machine, while replies come from your Pi agent. Interrupt it mid-answer, pick a voice and persona, and export the transcript.",
+      "kind": "local-web-app",
+      "stage": "proof of concept",
+      "year": 2026,
+      "repo": "https://github.com/Soleone/2026-08-06-podcaster",
+      "demo": {
+        "local": "npm run demo",
+        "externals": [
+          {
+            "name": "Local speech models (recognition and voice)",
+            "type": "model",
+            "seam": "PODCASTER_WEB_BUILD_ENTRY selects the fake-services web build, which swaps the session transport for a canned one",
+            "standIn": "canned",
+            "note": "Nothing you say is transcribed. The replies are fixed text and are not spoken by a voice model."
+          },
+          {
+            "name": "Pi agent (the reply model)",
+            "type": "service",
+            "seam": "The same fake-services build: replies come from the page, not from a Pi process",
+            "standIn": "canned",
+            "note": "Replies are canned. No model provider or Pi account is used."
+          },
+          {
+            "name": "Microphone",
+            "type": "hardware",
+            "seam": "The page asks the browser for the microphone as usual; the demo build keeps the audio in the page",
+            "standIn": "simulated",
+            "note": "Your microphone opens and the level shows, but the audio stays in the page and is never sent anywhere."
+          }
+        ]
+      },
+      "media": {
+        "hero": "media/products-podcaster/hero.png",
+        "motion": "media/products-podcaster/motion.webp",
+        "capture": "npm run media:capture"
+      },
+      "tier": "A",
+      "target": "S",
+      "gap": [
+        "live"
+      ],
+      "source": "showcase.json"
+    },
+    {
+      "id": "local:products/logdig",
+      "priority": "high",
+      "title": "logdig",
+      "pitch": "Turn your coding agent history into a daily journal you can read.",
+      "description": "Backfill a week of work in parallel, keep the short version in your notes and click a timestamp for the details. Your handwritten notes are never overwritten, and it works with Obsidian or plain Markdown.",
+      "kind": "cli",
+      "stage": "product",
+      "year": 2026,
+      "repo": "https://github.com/Soleone/logdig",
+      "live": "https://logdig.soleone.xyz",
+      "demo": {
+        "strategy": "browser-terminal",
+        "local": "npm run demo",
+        "externals": [
+          {
+            "name": "LLM summaries via Pi",
+            "type": "model",
+            "seam": "piCommand setting (Pi JSON event stream)",
+            "standIn": "canned",
+            "note": "Sessions are synthetic and a stand-in for Pi returns canned summaries, so nothing is sent to a model."
+          }
+        ]
+      },
+      "media": {
+        "hero": "media/products-logdig/hero.png",
+        "motion": "media/products-logdig/motion.webp",
+        "video": "media/products-logdig/video.mp4",
+        "capture": "npm run demo:capture"
+      },
+      "tier": "S",
+      "target": "S",
+      "gap": [],
+      "source": "showcase.json"
+    },
+    {
+      "id": "local:products/showcase",
+      "priority": "mid",
+      "title": "showcase",
+      "pitch": "Grade how demoable a project is, from D to S, and get the exact next steps to raise it.",
+      "description": "Checks the README, media, showcase.json and demo against five tiers and lists what is missing. Comes with an agent skill that does the fixing and a collect command that feeds a portfolio site.",
+      "kind": "cli",
+      "year": 2026,
+      "tech": [
+        "Node.js"
+      ],
+      "repo": "https://github.com/Soleone/showcase",
+      "live": "https://showcase.soleone.xyz",
+      "demo": {
+        "strategy": "browser-terminal",
+        "local": "npm run demo",
+        "externals": []
+      },
+      "media": {
+        "hero": "media/products-showcase/hero.png",
+        "motion": "media/products-showcase/motion.webp",
+        "capture": "npm run media:capture"
+      },
+      "tier": "S",
+      "target": "A",
+      "gap": [],
+      "source": "showcase.json"
+    },
+    {
+      "id": "local:pi/pi-tasks",
+      "priority": null,
+      "title": "pi-tasks",
+      "pitch": "Task management extension for the pi coding agent, designed for pluggable task backends.",
+      "kind": "agent-extension",
+      "year": 2026,
+      "repo": "https://github.com/Soleone/pi-tasks",
+      "media": {
+        "hero": "https://github.com/user-attachments/assets/af210b63-f993-447d-9668-3308874d493c"
+      },
+      "tier": "C",
+      "target": null,
+      "gap": [],
+      "source": "draft"
+    },
+    {
+      "id": "local:pi/pi-git",
+      "priority": null,
+      "title": "pi-git",
+      "pitch": "A fresh pi extension for Git workflows. The replacement keeps the main pi editor usable while a quick commit is generated and checked in the background.",
+      "kind": "agent-extension",
+      "year": 2026,
+      "repo": "https://github.com/Soleone/pi-git",
+      "tier": "C",
+      "target": null,
+      "gap": [],
+      "source": "draft"
     },
     {
       "id": "local:js/portfolio-review",
@@ -185,82 +307,6 @@
       "target": null,
       "gap": [],
       "source": "draft"
-    },
-    {
-      "id": "local:products/showcase",
-      "priority": "mid",
-      "title": "showcase",
-      "pitch": "Grade how demoable a project is, from D to S, and get the exact next steps to raise it.",
-      "description": "Checks the README, media, showcase.json and demo against five tiers and lists what is missing. Comes with an agent skill that does the fixing and a collect command that feeds a portfolio site.",
-      "kind": "cli",
-      "year": 2026,
-      "tech": [
-        "Node.js"
-      ],
-      "repo": "https://github.com/Soleone/showcase",
-      "live": "https://showcase.soleone.xyz",
-      "demo": {
-        "strategy": "browser-terminal",
-        "local": "npm run demo",
-        "externals": []
-      },
-      "media": {
-        "hero": "media/products-showcase/hero.png",
-        "motion": "media/products-showcase/motion.webp",
-        "capture": "npm run media:capture"
-      },
-      "tier": "S",
-      "target": "A",
-      "gap": [],
-      "source": "showcase.json"
-    },
-    {
-      "id": "local:products/podcaster",
-      "priority": "high",
-      "title": "Podcaster",
-      "pitch": "Talk to a podcast companion with your microphone and hear it answer out loud.",
-      "description": "Speech recognition and voice synthesis run on your machine, while replies come from your Pi agent. Interrupt it mid-answer, pick a voice and persona, and export the transcript.",
-      "kind": "local-web-app",
-      "stage": "proof of concept",
-      "year": 2026,
-      "repo": "https://github.com/Soleone/2026-08-06-podcaster",
-      "demo": {
-        "local": "npm run demo",
-        "externals": [
-          {
-            "name": "Local speech models (recognition and voice)",
-            "type": "model",
-            "seam": "PODCASTER_WEB_BUILD_ENTRY selects the fake-services web build, which swaps the session transport for a canned one",
-            "standIn": "canned",
-            "note": "Nothing you say is transcribed. The replies are fixed text and are not spoken by a voice model."
-          },
-          {
-            "name": "Pi agent (the reply model)",
-            "type": "service",
-            "seam": "The same fake-services build: replies come from the page, not from a Pi process",
-            "standIn": "canned",
-            "note": "Replies are canned. No model provider or Pi account is used."
-          },
-          {
-            "name": "Microphone",
-            "type": "hardware",
-            "seam": "The page asks the browser for the microphone as usual; the demo build keeps the audio in the page",
-            "standIn": "simulated",
-            "note": "Your microphone opens and the level shows, but the audio stays in the page and is never sent anywhere."
-          }
-        ]
-      },
-      "media": {
-        "hero": "media/products-podcaster/hero.png",
-        "motion": "media/products-podcaster/motion.webp",
-        "capture": "npm run media:capture"
-      },
-      "tier": "A",
-      "target": "S",
-      "gap": [
-        "live"
-      ],
-      "source": "showcase.json"
     },
     {
       "id": "local:products/staffed",
@@ -391,52 +437,6 @@
       "target": null,
       "gap": [],
       "source": "draft"
-    },
-    {
-      "id": "local:products/better-youtube",
-      "priority": "high",
-      "title": "Better Youtube",
-      "pitch": "Add any YouTube video to your favorite playlists in one click, straight from Home or Subscriptions.",
-      "description": "Every add turns into an Undo button, a Playlists entry in the sidebar jumps to your favorites, and playlist pages get a Remove button. A bundled demo runs without a YouTube account.",
-      "kind": "browser-extension",
-      "stage": "product",
-      "year": 2026,
-      "repo": "https://github.com/Soleone/better-youtube",
-      "demo": {
-        "local": "npm run demo",
-        "externals": [
-          {
-            "name": "YouTube home page",
-            "type": "service",
-            "seam": "--host-resolver-rules points www.youtube.com at the demo server",
-            "standIn": "simulated",
-            "note": "A synthetic copy of the home page layout with invented videos. It is not YouTube."
-          },
-          {
-            "name": "YouTube playlist API",
-            "type": "service",
-            "seam": "window.fetch on the page: the bridge posts to /youtubei/v1/browse/edit_playlist, which the demo page answers itself",
-            "standIn": "canned",
-            "note": "Playlist changes are answered locally and never reach YouTube."
-          },
-          {
-            "name": "Signed-in YouTube account",
-            "type": "account",
-            "seam": "the SAPISID cookie and ytcfg the page provides to the bridge",
-            "standIn": "simulated",
-            "note": "The demo sets a fake login cookie. No account is used."
-          }
-        ]
-      },
-      "media": {
-        "hero": "media/products-better-youtube/hero.png",
-        "motion": "media/products-better-youtube/motion.webp",
-        "capture": "npm run media:capture"
-      },
-      "tier": "A",
-      "target": "A",
-      "gap": [],
-      "source": "showcase.json"
     },
     {
       "id": "local:remix/stickerbook",
