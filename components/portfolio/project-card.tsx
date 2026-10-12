@@ -243,10 +243,10 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
         >
           {/* Front */}
           <Face className="relative" style={surface} hidden={showingBack}>
-            <div className="relative p-2.5" style={layer(0.3)}>
-              <div className="relative aspect-[16/10] overflow-hidden rounded-inner bg-black/80 shadow-well ring-1 ring-black/10">
+            <div className="relative p-1.5" style={layer(0.3)}>
+              <div className="relative aspect-[16/10] overflow-hidden rounded-[calc(var(--radius-3xl)-0.375rem)] bg-black/80 shadow-well ring-1 ring-black/10">
                 <Media project={project} videoRef={videoRef} />
-                <div className="pointer-events-none absolute inset-0 rounded-inner shadow-well-bezel" />
+                <div className="pointer-events-none absolute inset-0 rounded-[calc(var(--radius-3xl)-0.375rem)] shadow-well-bezel" />
               </div>
             </div>
 
