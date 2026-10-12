@@ -31,6 +31,8 @@ export type Project = {
   live?: string
   // From showcase's feed: only S and A projects are listed, S first within a priority (see showcaseRank in lib/showcase.ts).
   showcaseTier?: "S" | "A" | "B" | "C" | "D" | null
+  // From showcase's feed: how far along it is (product, prototype, proof of concept), shown as a pill on the card.
+  stage?: string | null
   // Position in the showcase registry (portfolio.json), which the owner reorders with `showcase manage`.
   feedOrder?: number
 }
@@ -170,7 +172,7 @@ export const projects: Project[] = [
       "A browser/script experiment for improving the YouTube experience, marked for a future README and deeper polish pass.",
     year: "2026",
     priority: "mid",
-    type: "Browser script",
+    type: "Browser extension",
     tech: ["JavaScript", "CSS", "Chrome extension"],
     href: "https://github.com/Soleone/better-youtube",
   },
