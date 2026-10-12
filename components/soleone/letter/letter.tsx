@@ -1,18 +1,34 @@
 "use client"
 
 import { animate, motion, useMotionValue, useReducedMotion, useTransform, type MotionValue } from "motion/react"
-import { Feather, PenLine, Send } from "lucide-react"
-import { useRef, useState, type CSSProperties, type ReactNode, type SubmitEvent } from "react"
-import { Button } from "@/components/ui/button"
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { profile } from "@/lib/portfolio"
-import { sendMail, type SendResult } from "@/app/actions/send-mail"
+import { Feather } from "lucide-react"
+import { useRef, useState, type ChangeEvent, type CSSProperties, type ReactNode, type SubmitEvent } from "react"
 import { grain } from "@/components/soleone/material/sheen"
 
-type Draft = { name: string; email: string; message: string }
-const blank: Draft = { name: "", email: "", message: "" }
+// A letter that folds itself into a paper plane and flies off when it is sent. What is written on it is up
+// to the caller: `children` draws the page from the draft, once live (the form) and three more times
+// read-only while it folds, so the copies have to look the same as the live page.
+
+export type LetterResult = { ok: true } | { ok: false; error: string }
+
+type Draft = Record<string, string>
+
+export type LetterPage<D extends Draft> = {
+  draft: D
+  /** True for the form itself; false for the copies the fold draws, which must not repeat its ids. */
+  live: boolean
+  /** Props for an input or textarea bound to one field of the draft. */
+  field: (name: keyof D & string) => {
+    name: string
+    value: string
+    onChange?: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
+    readOnly: boolean
+  }
+  /** Why the last send failed, on the live page only. */
+  error: string | null
+  /** Waiting on delivery without motion, where there is no fold to watch. */
+  pending: boolean
+}
 
 const easeInOutCubic = [0.65, 0, 0.35, 1] as const
 const easeOutQuint = [0.22, 1, 0.36, 1] as const
@@ -33,13 +49,31 @@ const paperBack: CSSProperties = { background: "color-mix(in oklch, var(--card) 
 // The underside of the paper, showing where a corner is folded over the outside.
 const paperCrease: CSSProperties = { background: "color-mix(in oklch, var(--card) 84%, var(--foreground))" }
 
-type Props = {
-  // Both are for the lab, which plays the animation without writing a letter or sending a real one.
-  initial?: Draft
-  deliver?: (form: FormData) => Promise<SendResult>
-}
-
-export function Letter({ initial = blank, deliver = sendMail }: Props) {
+export function Letter<D extends Draft>({
+  initial,
+  deliver,
+  sender,
+  recipient,
+  stamp,
+  hiddenFields,
+  sent,
+  children,
+}: {
+  /** The fields of the draft and what they start with. */
+  initial: D
+  /** Posts the form. It starts as soon as the letter is sent; the fold only waits for it at the postmark. */
+  deliver: (form: FormData) => Promise<LetterResult>
+  /** Who the envelope says it is from. */
+  sender: (draft: D) => string
+  /** Who the envelope is addressed to. */
+  recipient: { name: string; place?: string }
+  stamp?: { icon?: ReactNode; label?: string }
+  /** Rendered once inside the form after the page, for honeypots and hidden inputs. */
+  hiddenFields?: ReactNode
+  /** What takes the letter's place once it has flown off. */
+  sent: (letter: { draft: D; writeAnother: () => void }) => ReactNode
+  children: (page: LetterPage<D>) => ReactNode
+}) {
   const reduced = useReducedMotion() ?? false
   const [draft, setDraft] = useState(initial)
   const [phase, setPhase] = useState<"writing" | "sending" | "sent">("writing")
@@ -53,7 +87,7 @@ export function Letter({ initial = blank, deliver = sendMail }: Props) {
   // Only without motion: there is no fold to watch while the letter is on its way.
   const [pending, setPending] = useState(false)
   const sheetRef = useRef<HTMLDivElement>(null)
-  const messageRef = useRef<HTMLTextAreaElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
 
   // Degrees each outer third has turned over the middle one.
   const bottomFold = useMotionValue(0)
@@ -68,14 +102,11 @@ export function Letter({ initial = blank, deliver = sendMail }: Props) {
   const rotate = useMotionValue(0)
   const scale = useMotionValue(1)
 
-  const edit = (field: keyof Draft) => (event: { target: { value: string } }) =>
-    setDraft((current) => ({ ...current, [field]: event.target.value }))
-
   async function send(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     // Posted right away; the fold plays while it travels and only waits for the answer at the postmark.
     const posted = deliver(new FormData(event.currentTarget)).catch(
-      (): SendResult => ({ ok: false, error: "The mail couldn't be sent. Check your connection and try again." }),
+      (): LetterResult => ({ ok: false, error: "The mail couldn't be sent. Check your connection and try again." }),
     )
     setError(null)
     setPostedOn(new Date().toLocaleDateString("en", { month: "short", day: "numeric" }))
@@ -139,32 +170,52 @@ export function Letter({ initial = blank, deliver = sendMail }: Props) {
   function writeAnother() {
     for (const value of [bottomFold, topFold, topCorner, bottomCorner, postmark, waves, x, y, rotate]) value.jump(0)
     scale.jump(1)
-    setDraft(blank)
+    setDraft(Object.fromEntries(Object.keys(initial).map((key) => [key, ""])) as D)
     setFolds(null)
     setShape("thirds")
     setPhase("writing")
     setRound(round + 1)
-    requestAnimationFrame(() => messageRef.current?.focus())
+    // A fresh sheet: the pen goes back to its first field.
+    requestAnimationFrame(() => formRef.current?.querySelector<HTMLElement>("textarea, input:not([tabindex='-1'])")?.focus())
   }
 
   const sheet = (live: boolean) => (
-    <Sheet
-      draft={draft}
-      live={live}
-      onChange={live ? edit : undefined}
-      messageRef={live ? messageRef : undefined}
-      sheetRef={live ? sheetRef : undefined}
-      error={live ? error : null}
-      pending={live && pending}
-    />
+    <Sheet sheetRef={live ? sheetRef : undefined}>
+      {children({
+        draft,
+        live,
+        field: (name) => ({
+          name,
+          value: draft[name],
+          onChange: live
+            ? (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+                setDraft((current) => ({ ...current, [name]: event.target.value }))
+            : undefined,
+          readOnly: !live,
+        }),
+        error: live ? error : null,
+        pending: live && pending,
+      })}
+    </Sheet>
   )
 
   // Its right end is kept clear for the plane's nose, so the corners never fold over the stamp.
-  const envelope = folds && <Envelope from={draft.name} postedOn={postedOn} postmark={postmark} waves={waves} nose={folds[0] / 2} />
+  const envelope = folds && (
+    <Envelope
+      from={sender(draft)}
+      recipient={recipient}
+      stamp={stamp}
+      postedOn={postedOn}
+      postmark={postmark}
+      waves={waves}
+      nose={folds[0] / 2}
+    />
+  )
 
   return (
     <div className="relative">
       <motion.form
+        ref={formRef}
         key={round}
         onSubmit={send}
         inert={phase !== "writing"}
@@ -175,10 +226,7 @@ export function Letter({ initial = blank, deliver = sendMail }: Props) {
         transition={{ duration: 0.6, ease: easeOutQuint }}
       >
         {sheet(true)}
-        {/* For bots only: people never see it, so anything in it means the letter is not from one. */}
-        <div aria-hidden className="absolute -left-[9999px] size-px overflow-hidden">
-          <input name="website" tabIndex={-1} autoComplete="off" />
-        </div>
+        {hiddenFields}
       </motion.form>
 
       {phase === "sending" && folds && (
@@ -217,15 +265,7 @@ export function Letter({ initial = blank, deliver = sendMail }: Props) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: easeOutQuint, delay: reduced ? 0 : 0.1 }}
           >
-            <span className="text-sm font-medium tracking-wider text-primary uppercase">Sent</span>
-            <h3 className="text-2xl font-semibold tracking-tight text-balance">Your mail is on its way.</h3>
-            <p className="max-w-sm text-pretty text-muted-foreground">
-              Thanks, {draft.name}. I&apos;ll write back to {draft.email} within a day.
-            </p>
-            <Button variant="outline" className="mt-3" onClick={writeAnother}>
-              <PenLine data-icon="inline-start" />
-              Write another
-            </Button>
+            {sent({ draft, writeAnother })}
           </motion.div>
         )}
       </div>
@@ -233,27 +273,8 @@ export function Letter({ initial = blank, deliver = sendMail }: Props) {
   )
 }
 
-// The letter itself. The fold renders it three more times, read-only, each clipped to its third.
-function Sheet({
-  draft,
-  live,
-  onChange,
-  messageRef,
-  sheetRef,
-  error,
-  pending,
-}: {
-  draft: Draft
-  live: boolean
-  error: string | null
-  pending: boolean
-  onChange?: (field: keyof Draft) => (event: { target: { value: string } }) => void
-  messageRef?: React.Ref<HTMLTextAreaElement>
-  sheetRef?: React.Ref<HTMLDivElement>
-}) {
-  // Copies must not repeat the live form's ids.
-  const id = (name: string) => (live ? name : undefined)
-
+// The page itself. The fold renders it three more times, read-only, each clipped to its third.
+function Sheet({ sheetRef, children }: { sheetRef?: React.Ref<HTMLDivElement>; children: ReactNode }) {
   return (
     <div
       ref={sheetRef}
@@ -261,73 +282,7 @@ function Sheet({
       style={{ ...paper, borderRadius: radius }}
     >
       <Grain />
-      <FieldGroup className="relative">
-        <Field>
-          <FieldLabel htmlFor={id("message")} variant="lead">
-            Dear {profile.name},
-          </FieldLabel>
-          <Textarea
-            ref={messageRef}
-            id={id("message")}
-            name="message"
-            value={draft.message}
-            onChange={onChange?.("message")}
-            readOnly={!live}
-            placeholder="Tell me about your project..."
-            required
-            variant="underline"
-            className="min-h-[120px]"
-          />
-        </Field>
-        <div className="grid gap-6 sm:grid-cols-2">
-          <Field>
-            <FieldLabel htmlFor={id("name")} variant="eyebrow">
-              From
-            </FieldLabel>
-            <Input
-              id={id("name")}
-              name="name"
-              value={draft.name}
-              onChange={onChange?.("name")}
-              readOnly={!live}
-              placeholder="Jane Doe"
-              autoComplete="name"
-              data-1p-ignore
-              required
-              variant="underline"
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor={id("email")} variant="eyebrow">
-              Reply to
-            </FieldLabel>
-            <Input
-              id={id("email")}
-              name="email"
-              type="email"
-              value={draft.email}
-              onChange={onChange?.("email")}
-              readOnly={!live}
-              placeholder="jane@example.com"
-              autoComplete="email"
-              data-1p-ignore
-              required
-              variant="underline"
-            />
-          </Field>
-        </div>
-        <div className="flex items-center justify-end gap-4">
-          {error && (
-            <p role="alert" className="mr-auto text-sm text-pretty text-destructive">
-              {error}
-            </p>
-          )}
-          <Button type={live ? "submit" : "button"} disabled={pending} className="shrink-0">
-            {pending ? "Sending..." : "Send mail"}
-            <Send data-icon="inline-end" />
-          </Button>
-        </div>
-      </FieldGroup>
+      {children}
     </div>
   )
 }
@@ -458,12 +413,16 @@ function Corner({ angle, side, size }: { angle: MotionValue<number>; side: "top"
 // The outside of the folded letter: who it is from, who it is for, a stamp and the postmark.
 function Envelope({
   from,
+  recipient,
+  stamp,
   postedOn,
   postmark,
   waves,
   nose,
 }: {
   from: string
+  recipient: { name: string; place?: string }
+  stamp?: { icon?: ReactNode; label?: string }
   postedOn: string
   postmark: MotionValue<number>
   waves: MotionValue<number>
@@ -483,7 +442,7 @@ function Envelope({
       <div className="relative flex items-start justify-between gap-4">
         <div className="truncate text-2xs font-medium tracking-wider text-muted-foreground uppercase">From {from}</div>
         <div className="relative shrink-0">
-          <Stamp />
+          <Stamp icon={stamp?.icon} label={stamp?.label} />
           <div className="absolute top-5 -left-20 -rotate-12 text-foreground">
             {/* Presses down around the center of the circle. */}
             <motion.div style={{ opacity, scale: markScale, originX: 86 / 112, originY: 0.5 }}>
@@ -496,8 +455,8 @@ function Envelope({
         </div>
       </div>
       <div className="relative">
-        <div className="text-lg leading-tight font-semibold tracking-tight">{profile.name}</div>
-        <div className="text-sm text-muted-foreground">{profile.location}</div>
+        <div className="text-lg leading-tight font-semibold tracking-tight">{recipient.name}</div>
+        {recipient.place && <div className="text-sm text-muted-foreground">{recipient.place}</div>}
       </div>
     </div>
   )
@@ -513,7 +472,7 @@ const perforated: CSSProperties = {
   maskRepeat: "no-repeat, repeat",
 }
 
-function Stamp() {
+function Stamp({ icon = <Feather className="size-4" />, label }: { icon?: ReactNode; label?: string }) {
   return (
     // The stamp is drawn to its perforation mask in px, so it keeps px of its own.
     // oxlint-disable-next-line shadcn/no-arbitrary-values
@@ -522,9 +481,9 @@ function Stamp() {
         className="flex size-full flex-col items-center justify-center gap-1 text-primary-foreground"
         style={{ background: "linear-gradient(160deg, var(--primary), color-mix(in oklch, var(--primary), black 28%))" }}
       >
-        <Feather className="size-4" />
+        {icon}
         {/* oxlint-disable-next-line shadcn/no-arbitrary-values */}
-        <span className="text-[6px] font-semibold tracking-[0.15em] uppercase">Ottawa</span>
+        {label && <span className="text-[6px] font-semibold tracking-[0.15em] uppercase">{label}</span>}
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import { Letter } from "./letter"
+import { ContactLetter } from "./contact-letter"
 import { SectionHeading } from "./section-heading"
 
 export function Contact() {
@@ -13,7 +13,7 @@ export function Contact() {
           </p>
         </div>
 
-        <Letter />
+        <ContactLetter />
       </div>
     </section>
   )

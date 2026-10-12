@@ -43,7 +43,6 @@
     {
       "files": [
         "components/portfolio/coins.tsx",
-        "components/portfolio/letter.tsx",
         "components/portfolio/project-card.tsx",
         "components/portfolio/skill-graph-scene.tsx",
         "components/soleone/**"
