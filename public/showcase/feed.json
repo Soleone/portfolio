@@ -36,6 +36,14 @@
         "motion": "media/products-vibestep/motion.webp",
         "capture": "npm run media:capture"
       },
+      "brand": {
+        "icon": "brand/products-vibestep/icon.png",
+        "wordmark": "brand/products-vibestep/wordmark.svg",
+        "colors": [
+          "#ff5ea8",
+          "#c7f464"
+        ]
+      },
       "tier": "S",
       "target": "S",
       "gap": [],
@@ -127,6 +135,12 @@
         "hero": "media/products-podcaster/hero.png",
         "motion": "media/products-podcaster/motion.webp",
         "capture": "npm run media:capture"
+      },
+      "brand": {
+        "icon": "brand/products-podcaster/icon.svg",
+        "colors": [
+          "#0e7490"
+        ]
       },
       "tier": "A",
       "target": "S",
