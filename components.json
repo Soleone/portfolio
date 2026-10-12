@@ -22,6 +22,6 @@
   "menuColor": "default",
   "menuAccent": "subtle",
   "registries": {
-    "@soleone": "http://localhost:3001/r/{name}.json"
+    "@soleone": "https://raw.githubusercontent.com/Soleone/shadcn-components/main/public/r/{name}.json"
   }
 }
