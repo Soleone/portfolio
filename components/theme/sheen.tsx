@@ -40,7 +40,7 @@ export function Sheen({
     <>
       <motion.div
         aria-hidden
-        className="pointer-events-none absolute inset-0 overflow-hidden rounded-[22px] mix-blend-soft-light"
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl mix-blend-soft-light"
         style={{ opacity: shine }}
       >
         <motion.div
@@ -54,7 +54,7 @@ export function Sheen({
       </motion.div>
       <motion.div
         aria-hidden
-        className="pointer-events-none absolute inset-0 overflow-hidden rounded-[22px]"
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl"
         style={{ opacity: rimOpacity, padding: rimWidth, ...ring }}
       >
         {/* A square big enough to cover the card at any angle; rotating it turns the highlight toward the light. */}

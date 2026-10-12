@@ -35,7 +35,22 @@
       "rules": {
         "shadcn/no-restyle": "off",
         "shadcn/no-arbitrary-values": "off",
+        "shadcn/no-inline-styles": "off",
+        "shadcn/no-unknown-classes": "off",
         "no-restricted-imports": "off"
+      }
+    },
+    {
+      "files": [
+        "components/portfolio/letter.tsx",
+        "components/portfolio/project-card.tsx",
+        "components/portfolio/skill-graph-scene.tsx",
+        "components/theme/sheen.tsx",
+        "components/theme/preview-card.tsx",
+        "components/theme/picker.tsx"
+      ],
+      "rules": {
+        "shadcn/no-inline-styles": "off"
       }
     }
   ]

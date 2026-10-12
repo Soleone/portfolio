@@ -3,7 +3,7 @@
 import { useReducedMotion } from "motion/react"
 import dynamic from "next/dynamic"
 import { ArrowLeft, ArrowUpRight, Diamond, Footprints, Pause, Search, X } from "lucide-react"
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react"
 import { Color } from "three"
 import { useTheme } from "@/components/theme"
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,11 @@ const arrangements: { value: Arrangement; label: string; hint: string }[] = [
 export const fieldToken = (field: number) => `var(--tint-${(field % 8) + 1})`
 export const tokenOf = (node: Pick<SkillNode, "kind" | "fields">) =>
   node.kind === "project" ? "var(--muted-foreground)" : fieldToken(node.fields[0] ?? 0)
+
+// A swatch in a field's tint. The tint arrives as a CSS variable, so it is handed over as one.
+export function Dot({ color, className }: { color: string; className?: string }) {
+  return <span className={cn("size-2 shrink-0 rounded-full bg-(--dot)", className)} style={{ "--dot": color } as CSSProperties} />
+}
 
 const WANDER_MS = 2600
 
@@ -240,7 +245,6 @@ export function SkillGraph({
             onPressedChange={setWithProjects}
             variant="outline"
             size="sm"
-            className="px-3 text-xs"
             title="Show the projects built with each thing"
           >
             <Diamond />
@@ -255,7 +259,7 @@ export function SkillGraph({
             aria-label="Arrange as"
           >
             {arrangements.map((option) => (
-              <ToggleGroupItem key={option.value} value={option.value} title={option.hint} className="px-3 text-xs">
+              <ToggleGroupItem key={option.value} value={option.value} title={option.hint}>
                 {option.label}
               </ToggleGroupItem>
             ))}
@@ -281,7 +285,7 @@ export function SkillGraph({
                 : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
-            <span className="size-2 rounded-full" style={{ background: fieldToken(index) }} />
+            <Dot color={fieldToken(index)} />
             {field.label}
           </button>
         ))}
@@ -298,8 +302,7 @@ export function SkillGraph({
           {/* A soft well of light behind the graph, in the theme's own brand color. */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 -z-10 opacity-60"
-            style={{ background: "radial-gradient(ellipse at center, color-mix(in oklab, var(--primary) 12%, transparent), transparent 65%)" }}
+            className="pointer-events-none absolute inset-0 -z-10 bg-radial from-primary/12 to-transparent to-65% opacity-60"
           />
           {near.ever && webgl && colors ? (
             <Scene
@@ -445,7 +448,7 @@ function SkillSearch({
 
   return (
     <div className="relative w-full sm:w-72">
-      <InputGroup className="h-8 bg-background/60">
+      <InputGroup className="h-8">
         <InputGroupAddon>
           <Search />
         </InputGroupAddon>
@@ -473,7 +476,6 @@ function SkillSearch({
             onHover(null)
           }}
           onKeyDown={onKeyDown}
-          className="text-sm"
         />
         <InputGroupAddon align="inline-end">
           {query ? (
@@ -508,7 +510,7 @@ function SkillSearch({
                   index === active && "bg-muted"
                 )}
               >
-                <span className="size-2 shrink-0 rounded-full" style={{ background: tokenOf(node) }} />
+                <Dot color={tokenOf(node)} />
                 <span className={cn("shrink-0", node.kind === "project" && "italic")}>{node.label}</span>
                 <span className="truncate text-xs text-muted-foreground">
                   {node.kind === "field" ? "Field" : node.kind === "project" ? `Project · ${node.project?.year}` : node.paths[0]?.join(" › ")}
@@ -545,7 +547,7 @@ function IntroPanel({ graph, onSelect, onWander }: { graph: Graph; onSelect: (id
         <div className="grid grid-cols-2 gap-2">
           {graph.fields.map((field, index) => (
             <Button key={field.id} variant="outline" size="sm" onClick={() => onSelect(field.id)} className="justify-start">
-              <span className="size-2 rounded-full" style={{ background: fieldToken(index) }} />
+              <Dot color={fieldToken(index)} />
               {field.label}
             </Button>
           ))}
@@ -597,7 +599,7 @@ function FocusPanel({
       <div className="flex items-start justify-between gap-3 border-b border-border p-5">
         <div className="flex min-w-0 flex-col gap-1">
           <span className="flex flex-wrap items-center gap-x-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            <span className="mr-0.5 size-2 rounded-full" style={{ background: tokenOf(node) }} />
+            <Dot color={tokenOf(node)} className="mr-0.5" />
             {node.kind === "project" && `Project · ${node.project?.year}`}
             {node.kind === "field" && "Field"}
             {crumbs.map((label, index) => (
@@ -644,7 +646,7 @@ function FocusPanel({
                     item.kind === "project" && "italic"
                   )}
                 >
-                  <span className="size-1.5 rounded-full" style={{ background: tokenOf(item) }} />
+                  <Dot color={tokenOf(item)} className="size-1.5" />
                   {item.label}
                   {/* How much more there is to find in there. */}
                   {item.children.length > 0 && item.kind !== "project" && (
@@ -688,7 +690,7 @@ function FocusPanel({
         </div>
       )}
 
-      <p className="hidden border-t border-border px-4 py-2 text-[11px] text-muted-foreground lg:block">
+      <p className="hidden border-t border-border px-4 py-2 text-2xs text-muted-foreground lg:block">
         <Kbd>Backspace</Kbd> back · <Kbd>Esc</Kbd> close
       </p>
     </>
@@ -722,7 +724,7 @@ function FlatGraph({
             (focus ? node.id !== focus && !near.has(node.id) : !!highlight && !highlight.has(node.id)) && "opacity-30"
           )}
         >
-          <span className="size-2 rounded-full" style={{ background: tokenOf(node) }} />
+          <Dot color={tokenOf(node)} />
           {node.label}
         </button>
       ))}

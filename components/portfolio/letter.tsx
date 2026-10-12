@@ -30,9 +30,6 @@ const paper: CSSProperties = {
 }
 const paperBack: CSSProperties = { background: "color-mix(in oklch, var(--card) 92%, var(--foreground))" }
 
-const underline =
-  "h-auto rounded-none border-0 border-b border-foreground/20 bg-transparent px-0 py-1.5 shadow-none focus-visible:border-primary focus-visible:ring-0 dark:bg-transparent"
-const smallCaps = "text-[11px] font-medium tracking-wider text-muted-foreground uppercase"
 // The underside of the paper, showing where a corner is folded over the outside.
 const paperCrease: CSSProperties = { background: "color-mix(in oklch, var(--card) 84%, var(--foreground))" }
 
@@ -194,7 +191,7 @@ export function Letter({ initial = blank, deliver = sendMail }: Props) {
                 </Panel>
                 {/* Hidden once the bottom third covers it: Chrome draws the textarea in it on its own layer,
                     and the 3D sorting let that peek out past the top third as it lands. */}
-                <Panel from={folds[0]} to={folds[1]} coveredBy={bottomFold} className="shadow-[0_22px_40px_-22px_rgb(0_0_0/0.55)]">
+                <Panel from={folds[0]} to={folds[1]} coveredBy={bottomFold} className="shadow-fold">
                   {sheet(false)}
                 </Panel>
                 <Panel from={folds[1]} to={folds[2]} angle={bottomFold} origin="top" z={1} back={<div className="size-full" style={{ ...paperBack, borderRadius: `${radius}px ${radius}px 0 0` }} />}>
@@ -214,7 +211,8 @@ export function Letter({ initial = blank, deliver = sendMail }: Props) {
       <div aria-live="polite">
         {phase === "sent" && (
           <motion.div
-            className="absolute inset-0 flex flex-col items-start justify-center gap-3 rounded-[12px] border border-dashed border-foreground/15 p-8"
+            className="absolute inset-0 flex flex-col items-start justify-center gap-3 border border-dashed border-foreground/15 p-8"
+            style={{ borderRadius: radius }}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: easeOutQuint, delay: reduced ? 0 : 0.1 }}
@@ -259,13 +257,13 @@ function Sheet({
   return (
     <div
       ref={sheetRef}
-      className="relative border border-black/[0.07] p-7 shadow-[0_1px_2px_rgb(0_0_0/0.06),0_18px_40px_-24px_rgb(0_0_0/0.35)] sm:p-9 dark:border-white/10"
+      className="relative border border-black/[0.07] p-7 shadow-paper sm:p-9 dark:border-white/10"
       style={{ ...paper, borderRadius: radius }}
     >
       <Grain />
-      <FieldGroup className="relative gap-6">
+      <FieldGroup className="relative">
         <Field>
-          <FieldLabel htmlFor={id("message")} className="text-lg font-medium">
+          <FieldLabel htmlFor={id("message")} variant="lead">
             Dear {profile.name},
           </FieldLabel>
           <Textarea
@@ -277,12 +275,13 @@ function Sheet({
             readOnly={!live}
             placeholder="Tell me about your project..."
             required
-            className={`${underline} min-h-[120px] resize-none text-base leading-relaxed md:text-base`}
+            variant="underline"
+            className="min-h-[120px]"
           />
         </Field>
         <div className="grid gap-6 sm:grid-cols-2">
           <Field>
-            <FieldLabel htmlFor={id("name")} className={smallCaps}>
+            <FieldLabel htmlFor={id("name")} variant="eyebrow">
               From
             </FieldLabel>
             <Input
@@ -295,11 +294,11 @@ function Sheet({
               autoComplete="name"
               data-1p-ignore
               required
-              className={underline}
+              variant="underline"
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor={id("email")} className={smallCaps}>
+            <FieldLabel htmlFor={id("email")} variant="eyebrow">
               Reply to
             </FieldLabel>
             <Input
@@ -313,7 +312,7 @@ function Sheet({
               autoComplete="email"
               data-1p-ignore
               required
-              className={underline}
+              variant="underline"
             />
           </Field>
         </div>
@@ -400,7 +399,7 @@ function Plane({
     // Lifted as far as the top third was, so the swap from the panels is seamless.
     <div className="absolute inset-x-0 transform-3d" style={{ top, height, transform: "translateZ(2px)" }}>
       {/* Its own element for the shadow: a filter on the strip would flatten the corners' 3D. */}
-      <div className="absolute inset-0 drop-shadow-[0_10px_12px_rgb(0_0_0/0.25)]">
+      <div className="absolute inset-0 drop-shadow-envelope">
         <div className="absolute inset-0" style={{ clipPath: `polygon(0 0, ${tip} 0, 100% 50%, ${tip} 100%, 0 100%)` }}>
           {children}
         </div>
@@ -482,7 +481,7 @@ function Envelope({
     >
       <Grain />
       <div className="relative flex items-start justify-between gap-4">
-        <div className={`${smallCaps} truncate`}>From {from}</div>
+        <div className="truncate text-2xs font-medium tracking-wider text-muted-foreground uppercase">From {from}</div>
         <div className="relative shrink-0">
           <Stamp />
           <div className="absolute top-5 -left-20 -rotate-12 text-foreground">
@@ -516,12 +515,15 @@ const perforated: CSSProperties = {
 
 function Stamp() {
   return (
+    // The stamp is drawn to its perforation mask in px, so it keeps px of its own.
+    // oxlint-disable-next-line shadcn/no-arbitrary-values
     <div className="h-[60px] w-[48px] p-[5px] drop-shadow-[0_1px_1px_rgb(0_0_0/0.15)]" style={perforated}>
       <div
         className="flex size-full flex-col items-center justify-center gap-1 text-primary-foreground"
         style={{ background: "linear-gradient(160deg, var(--primary), color-mix(in oklch, var(--primary), black 28%))" }}
       >
         <Feather className="size-4" />
+        {/* oxlint-disable-next-line shadcn/no-arbitrary-values */}
         <span className="text-[6px] font-semibold tracking-[0.15em] uppercase">Ottawa</span>
       </div>
     </div>
@@ -555,7 +557,7 @@ function Grain() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-0 opacity-[0.07] mix-blend-multiply dark:opacity-[0.12] dark:mix-blend-screen"
+      className="pointer-events-none absolute inset-0 opacity-7 mix-blend-multiply dark:opacity-12 dark:mix-blend-screen"
       style={{ backgroundImage: grain, borderRadius: "inherit" }}
     />
   )

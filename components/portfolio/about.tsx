@@ -15,7 +15,7 @@ export function About() {
         {values.map((value) => (
           <Card key={value.label}>
             <CardHeader>
-              <CardTitle className="text-base">{value.label}</CardTitle>
+              <CardTitle>{value.label}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-pretty leading-relaxed text-muted-foreground">{value.description}</p>
@@ -29,7 +29,7 @@ export function About() {
         {focusAreas.map((area) => (
           <Card key={area.label}>
             <CardHeader>
-              <CardTitle className="text-base">{area.label}</CardTitle>
+              <CardTitle>{area.label}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-pretty leading-relaxed text-muted-foreground">{area.description}</p>

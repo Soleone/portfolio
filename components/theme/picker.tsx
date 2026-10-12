@@ -1,5 +1,6 @@
 "use client"
 
+// oxlint-disable-next-line no-restricted-imports -- the 3D stage needs the raw Backdrop and Popup, which components/ui/dialog styles
 import { Dialog } from "@base-ui/react/dialog"
 import {
   animate,
@@ -406,6 +407,7 @@ export function ThemePicker() {
             title="Theme (T)"
             // No focus ring, ever: focus comes back here each time the picker closes, and a ring
             // flashing around the icon reads as a glitch. Keyboard focus still shows as a hover fill.
+            // oxlint-disable-next-line shadcn/no-restyle
             className="relative outline-none focus-visible:border-transparent focus-visible:bg-muted focus-visible:ring-0"
           >
             <Palette />
@@ -416,7 +418,7 @@ export function ThemePicker() {
       <Dialog.Portal>
         <Dialog.Backdrop
           className={cn(
-            "fixed inset-0 z-50 bg-background/55 duration-200 supports-backdrop-filter:backdrop-blur-[3px] data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+            "fixed inset-0 z-50 bg-background/55 duration-200 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
             revealing && "invisible",
           )}
         />
@@ -641,7 +643,7 @@ const RingCard = memo(function RingCard({
     >
       <motion.div
         aria-hidden
-        className="pointer-events-none absolute inset-x-[8%] top-[12%] bottom-0 rounded-[28px] bg-black blur-2xl"
+        className="pointer-events-none absolute inset-x-[8%] top-[12%] bottom-0 rounded-4xl bg-black blur-2xl"
         style={{ x: shadowX, y: shadowY, z: -40, opacity: shadowOpacity }}
       />
       <motion.div
@@ -653,7 +655,7 @@ const RingCard = memo(function RingCard({
         style={{ rotateX, rotateY }}
       >
         <ThemePreviewCard theme={theme} depth={1} selectable={isFront} pressed={pressed} className="size-full">
-          <motion.div aria-hidden className="absolute inset-0 rounded-[22px] bg-black" style={{ opacity: shade }} />
+          <motion.div aria-hidden className="absolute inset-0 rounded-3xl bg-black" style={{ opacity: shade }} />
           <Sheen
             glareX={glareX}
             glareY={glareY}

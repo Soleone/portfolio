@@ -12,7 +12,7 @@ export function Skills() {
       {/* The map is drawn for the eye; this is the same outline for readers and crawlers. */}
       <ul className="sr-only">
         {rows.map((row, index) => (
-          <li key={index} style={{ marginLeft: `${row.depth}em` }}>
+          <li key={index}>
             {row.text}
           </li>
         ))}

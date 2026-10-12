@@ -138,9 +138,9 @@ export default function SkillGraphScene(props: SceneProps) {
             onPointerLeave={() => props.onHover(null)}
             className={cn(
               "pointer-events-auto absolute top-0 left-0 cursor-pointer whitespace-nowrap rounded px-1 text-xs leading-tight transition-colors duration-300 select-none will-change-transform",
-              node.kind === "field" && "text-[0.7rem] font-semibold uppercase tracking-wider",
+              node.kind === "field" && "text-2xs font-semibold uppercase tracking-wider",
               node.kind === "area" && "font-medium",
-              node.kind === "project" && "text-[0.7rem] italic",
+              node.kind === "project" && "text-2xs italic",
               emphasis.node[i] === "focus" && "font-semibold text-foreground",
               emphasis.node[i] === "near" && "text-foreground",
               emphasis.node[i] !== "focus" && emphasis.node[i] !== "near" && "text-muted-foreground"

@@ -12,6 +12,7 @@ import {
   useState,
   useTransition,
   type ClipboardEvent,
+  type CSSProperties,
   type KeyboardEvent,
 } from "react"
 import { saveSkills } from "@/app/skills/actions"
@@ -20,7 +21,7 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "
 import { Kbd } from "@/components/ui/kbd"
 import { formatOutline, matchRank, parseOutline, slug, tidy, type Outline, type OutlineRow } from "@/lib/skill-graph"
 import { cn } from "@/lib/utils"
-import { fieldToken, SkillGraph } from "./skill-graph"
+import { Dot, fieldToken, SkillGraph } from "./skill-graph"
 
 // The outliner for content/skills.md. Rows are a flat list with depths, the way the file is: a row
 // owns the rows below it that sit deeper. Everything is keyboard first, like any outliner.
@@ -395,7 +396,7 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
             )}
             <Button size="sm" onClick={save} disabled={!dirty || saving}>
               {saving ? "Saving…" : "Save"}
-              <Kbd className="bg-primary-foreground/15 text-primary-foreground">⌘S</Kbd>
+              <Kbd>⌘S</Kbd>
             </Button>
           </div>
         </div>
@@ -442,7 +443,6 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
                     input?.setSelectionRange(input.value.length, input.value.length)
                   }
                 }}
-                className="text-sm"
               />
               <InputGroupAddon align="inline-end">
                 {searching ? (
@@ -494,7 +494,7 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
                 >
                   {/* Indent guides, one per level. */}
                   {Array.from({ length: row.depth }, (_, level) => (
-                    <span key={level} aria-hidden className="h-8 w-6 shrink-0 border-l border-border/70" style={{ marginLeft: level === 0 ? 11 : 0 }} />
+                    <span key={level} aria-hidden className={cn("h-8 w-6 shrink-0 border-l border-border/70", level === 0 && "ml-[11px]")} />
                   ))}
                   <button
                     type="button"
@@ -506,7 +506,7 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
                     {parent ? (
                       <ChevronRight className={cn("size-3.5 text-muted-foreground transition-transform", !folded && "rotate-90")} />
                     ) : (
-                      <span className="size-1.5 rounded-full" style={{ background: fieldToken(Math.max(fieldOf[i], 0)) }} />
+                      <Dot color={fieldToken(Math.max(fieldOf[i], 0))} className="size-1.5" />
                     )}
                   </button>
                   <input
@@ -528,33 +528,34 @@ export function SkillsOutliner({ initial }: { initial: Outline }) {
                     }}
                     className={cn(
                       "h-8 min-w-0 flex-1 bg-transparent px-1.5 text-sm outline-none placeholder:text-muted-foreground/50",
-                      row.depth === 0 && "font-semibold uppercase tracking-wider",
+                      row.depth === 0 && "font-semibold uppercase tracking-wider text-(--field)",
                       row.depth === 1 && "font-medium"
                     )}
-                    style={row.depth === 0 ? { color: fieldToken(Math.max(fieldOf[i], 0)) } : undefined}
+                    style={row.depth === 0 ? ({ "--field": fieldToken(Math.max(fieldOf[i], 0)) } as CSSProperties) : undefined}
                   />
                   {folded && (
                     <span className="mr-2 text-xs tabular-nums text-muted-foreground">{subtreeEnd(rows, i) - i - 1}</span>
                   )}
                   {count > 1 && (
                     <span
-                      className="mr-2 rounded-full border border-border px-1.5 text-[11px] text-muted-foreground"
+                      className="mr-2 rounded-full border border-border px-1.5 text-2xs text-muted-foreground"
                       title="This name appears in more than one place: one node, linked under each parent"
                     >
                       in {count} places
                     </span>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    tabIndex={-1}
-                    className="opacity-0 transition-opacity group-hover/row:opacity-100"
-                    onClick={() => remove(i)}
-                    aria-label={`Delete ${row.text || "row"}${parent ? " and everything under it" : ""}`}
-                    title={parent ? "Delete with everything under it (⌘Z brings it back)" : "Delete (⌘Z brings it back)"}
-                  >
-                    <Trash2 />
-                  </Button>
+                  <span className="flex opacity-0 transition-opacity group-hover/row:opacity-100">
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      tabIndex={-1}
+                      onClick={() => remove(i)}
+                      aria-label={`Delete ${row.text || "row"}${parent ? " and everything under it" : ""}`}
+                      title={parent ? "Delete with everything under it (⌘Z brings it back)" : "Delete (⌘Z brings it back)"}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </span>
                 </li>
               )
             })}

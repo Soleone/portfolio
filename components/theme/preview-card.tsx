@@ -64,8 +64,8 @@ export function ThemePreviewCard({
     <div
       data-theme={theme.name}
       className={cn(
-        "relative flex flex-col rounded-[22px] border border-black/[0.07] bg-background p-2 text-foreground select-none",
-        "shadow-[inset_0_1px_0_rgb(255_255_255/0.07)]",
+        "relative flex flex-col rounded-3xl border border-black/[0.07] bg-background p-2 text-foreground select-none",
+        "shadow-rim",
         dark && "dark border-white/10",
         raised && "transform-3d",
         className,
@@ -77,7 +77,7 @@ export function ThemePreviewCard({
           <div
             key={slice}
             aria-hidden
-            className="pointer-events-none absolute -inset-px rounded-[22px]"
+            className="pointer-events-none absolute -inset-px rounded-3xl"
             style={{
               transform: `translateZ(${-(slice + 1) * EDGE_STEP}px)`,
               // Darker toward the back, so the edge reads as a side in shadow.
@@ -88,8 +88,8 @@ export function ThemePreviewCard({
       <div
         aria-hidden
         className={cn(
-          "pointer-events-none absolute inset-0 rounded-[22px]",
-          dark ? "opacity-[0.12] mix-blend-screen" : "opacity-[0.07] mix-blend-multiply",
+          "pointer-events-none absolute inset-0 rounded-3xl",
+          dark ? "opacity-12 mix-blend-screen" : "opacity-7 mix-blend-multiply",
         )}
         style={{ backgroundImage: grain }}
       />
@@ -97,8 +97,8 @@ export function ThemePreviewCard({
       {/* The page canvas around a card surface, the way the site sits a project card on the background. */}
       <div
         className={cn(
-          "relative flex flex-1 flex-col justify-center rounded-[16px] bg-card p-3.5 text-card-foreground",
-          "shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_10px_24px_-12px_rgb(0_0_0/0.55)]",
+          "relative flex flex-1 flex-col justify-center rounded-inner bg-card p-3.5 text-card-foreground",
+          "shadow-surface",
           raised && "transform-3d",
         )}
         style={lift(10)}
@@ -107,7 +107,7 @@ export function ThemePreviewCard({
           <div className="truncate text-lg leading-tight font-semibold tracking-tight">{theme.label}</div>
           <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
             Small tools and games, {/* Selected text, the way the theme highlights it. */}
-            <span className="rounded-[3px] bg-(--selection) px-0.5 whitespace-nowrap text-(--selection-foreground)">
+            <span className="rounded-xs bg-(--selection) px-0.5 whitespace-nowrap text-(--selection-foreground)">
               built with care
             </span>
             .
@@ -115,7 +115,7 @@ export function ThemePreviewCard({
         </div>
 
         {/* Status badges: the success color and a quiet secondary surface. */}
-        <div className="mt-3 flex items-center justify-center gap-1.5 text-[10px] font-medium" style={lift(8)}>
+        <div className="mt-3 flex items-center justify-center gap-1.5 text-3xs font-medium" style={lift(8)}>
           <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-success">
             <span className="size-1.5 rounded-full bg-current" />
             Live
@@ -128,14 +128,14 @@ export function ThemePreviewCard({
             data-select
             className={cn(
               "inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground",
-              "shadow-[0_0_0_0_transparent,0_6px_14px_-5px_var(--primary)] transition-[scale,box-shadow,filter] duration-150 ease-out",
+              "shadow-glow transition duration-150 ease-out",
               // Hover lights it up in place: brighter, with a soft halo of its own color around it.
               selectable &&
                 !pressed &&
-                "hover:shadow-[0_0_0_2px_color-mix(in_oklab,var(--primary)_28%,transparent),0_8px_18px_-5px_var(--primary)] hover:brightness-110",
+                "hover:shadow-glow-lifted hover:brightness-110",
               // Pressed it sinks into the card: shaded inside, its glow pulled in, a touch smaller.
               pressed &&
-                "scale-[0.985] shadow-[inset_0_1px_2px_rgb(0_0_0/0.18),0_3px_8px_-4px_var(--primary)] brightness-95 duration-75",
+                "scale-[0.985] shadow-glow-pressed brightness-95 duration-75",
             )}
           >
             Select
@@ -148,7 +148,7 @@ export function ThemePreviewCard({
         {[1, 2, 3, 4, 5, 6, 7, 8].map((tint) => (
           <span
             key={tint}
-            className="h-1.5 flex-1 rounded-full shadow-[inset_0_-1px_0_rgb(0_0_0/0.2)]"
+            className="h-1.5 flex-1 rounded-full shadow-swatch"
             style={{ background: `var(--tint-${tint})` }}
           />
         ))}

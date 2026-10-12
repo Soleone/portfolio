@@ -56,6 +56,7 @@ export default function RootLayout({
         {/* The site ships its own themes. This keeps Dark Reader from restyling them, which would
             also rewrite inline styles before hydration and break it. */}
         <meta name="darkreader-lock" />
+        {/* oxlint-disable-next-line shadcn/no-inline-styles -- the theme registry generates every theme's tokens */}
         <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

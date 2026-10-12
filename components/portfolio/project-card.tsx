@@ -238,21 +238,21 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
           {/* Front */}
           <Face className="relative" style={surface} hidden={showingBack}>
             <div className="relative p-2.5" style={layer(0.3)}>
-              <div className="relative aspect-[16/10] overflow-hidden rounded-[16px] bg-black/80 shadow-[inset_0_1px_3px_rgb(0_0_0/0.35)] ring-1 ring-black/10">
+              <div className="relative aspect-[16/10] overflow-hidden rounded-inner bg-black/80 shadow-well ring-1 ring-black/10">
                 <Media project={project} videoRef={videoRef} />
-                <div className="pointer-events-none absolute inset-0 rounded-[16px] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08),inset_0_10px_24px_rgb(0_0_0/0.18)]" />
+                <div className="pointer-events-none absolute inset-0 rounded-inner shadow-well-bezel" />
               </div>
             </div>
 
             {/* Fixed-height slots keep every card the same size whatever the copy: one-line title, three-line pitch. */}
             <div className="px-5 pt-2 pb-4" style={layer(0.55)}>
-              <div className="flex items-center gap-2 text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+              <div className="flex items-center gap-2 text-2xs font-medium tracking-wider text-muted-foreground uppercase">
                 <span>{project.type}</span>
                 <span className="size-1 rounded-full bg-current opacity-40" />
                 <span className="tabular-nums">{project.year}</span>
                 {project.stage && (
                   <span
-                    className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide ring-1 normal-case ${stagePills[project.stage] ?? "bg-foreground/[0.06] ring-foreground/10"}`}
+                    className={`ml-auto rounded-full px-2 py-0.5 text-3xs font-semibold tracking-wide ring-1 normal-case ${stagePills[project.stage] ?? "bg-foreground/[0.06] ring-foreground/10"}`}
                   >
                     {project.stage}
                   </span>
@@ -270,7 +270,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
                   href={project.live}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-1.5 text-sm font-medium text-primary-foreground shadow-[0_6px_16px_-6px_var(--primary)] transition-transform active:scale-95"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-1.5 text-sm font-medium text-primary-foreground shadow-glow transition-transform active:scale-95"
                 >
                   <Play className="size-3.5 fill-current" />
                   Try it
@@ -316,7 +316,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
               {project.details && (
                 <p className="mt-5 line-clamp-6 text-sm leading-relaxed text-pretty">{project.details}</p>
               )}
-              <div className="mt-5 text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Built with</div>
+              <div className="mt-5 text-2xs font-medium tracking-wider text-muted-foreground uppercase">Built with</div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {project.tech.map((tag) => (
                   <span key={tag} className="rounded-full bg-foreground/[0.06] px-2 py-0.5 text-xs font-medium">
@@ -378,11 +378,11 @@ function Face({
     <div
       aria-hidden={hidden}
       inert={hidden}
-      className={`${className} flex flex-col rounded-[22px] border border-black/[0.07] backface-hidden transform-3d dark:border-white/10 [&_*]:backface-hidden`}
+      className={`${className} flex flex-col rounded-3xl border border-black/[0.07] backface-hidden transform-3d dark:border-white/10 [&_*]:backface-hidden`}
       style={style}
     >
       <div
-        className="pointer-events-none absolute inset-0 rounded-[22px] opacity-[0.07] mix-blend-multiply dark:opacity-[0.12] dark:mix-blend-screen"
+        className="pointer-events-none absolute inset-0 rounded-3xl opacity-7 mix-blend-multiply dark:opacity-12 dark:mix-blend-screen"
         style={{ backgroundImage: grain }}
       />
       {children}
@@ -420,7 +420,7 @@ function Sheen({
     <>
       <motion.div
         aria-hidden
-        className="pointer-events-none absolute inset-0 overflow-hidden rounded-[22px] mix-blend-soft-light"
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl mix-blend-soft-light"
         style={{ opacity: shine }}
       >
         <motion.div
@@ -434,7 +434,7 @@ function Sheen({
       </motion.div>
       <motion.div
         aria-hidden
-        className="pointer-events-none absolute inset-0 overflow-hidden rounded-[22px]"
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl"
         style={{ opacity: rimOpacity, padding: rimWidth, ...ring }}
       >
         {/* A square big enough to cover the card at any angle; rotating it turns the highlight toward the light. */}
