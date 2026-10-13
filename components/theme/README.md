@@ -15,7 +15,15 @@ This folder holds only what is particular to this site:
 
 - `config.ts`: the default theme, storage key, and where D lands.
 - `themes.ts`: the site's own themes on top of the built-in palettes: Game Boy (hidden; the Konami code
-  unlocks it), Oligarchy (a light theme adapted from
+  unlocks it), Copper Night (an Omarchy theme from
+  [hembramnishant50-glitch/omarchy-coppernight-theme](https://github.com/hembramnishant50-glitch/omarchy-coppernight-theme)
+  at commit b1d0f8cbcc71c3ccd97057fddbb52d979efa7add; shown in the picker). Copper Night embeds
+  upstream's `colors.toml` unchanged and maps its named slots directly, including `mode`, `selection`,
+  `orange`, and `brown`; no compatibility overrides are needed. The parser derives only missing
+  contrast-aware slots (`on_accent`, `on_red`, `muted_foreground`) and the generated CSS ignores the
+  upstream terminal/desktop extras (`cursor`, `bright_*`, `hyprland_*`). Upstream's README claims MIT,
+  but the referenced LICENSE file is absent at that revision, so no notice is included. Oligarchy (a light
+  theme adapted from
   [AlexanderBuzz/omarchy-oligarchy-theme](https://github.com/AlexanderBuzz/omarchy-oligarchy-theme) at commit
   6746fb3, MIT, notice in `oligarchy.LICENSE`; shown in the picker). Upstream's `colors.toml` is kept
   unchanged, with a compatibility block appended that sets `mode = "light"` and maps its ANSI colors to the

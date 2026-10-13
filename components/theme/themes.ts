@@ -35,6 +35,60 @@ brown = "#1e403b"`,
 };
 
 /**
+ * Copper Night, an Omarchy 4 theme by hembramnishant50-glitch.
+ * Source: https://github.com/hembramnishant50-glitch/omarchy-coppernight-theme at commit
+ * b1d0f8cbcc71c3ccd97057fddbb52d979efa7add.
+ *
+ * Upstream's README claims MIT, but the referenced LICENSE file is absent at that revision, so no
+ * license notice is invented here.
+ *
+ * The upstream colors.toml is embedded unchanged. Its named slots map directly to this site's
+ * palette slots, including `mode`, `selection`, `orange`, and `brown`, so no compatibility overrides
+ * are appended. The parser derives only the contrast-aware slots that are not present upstream
+ * (`on_accent`, `on_red`, and `muted_foreground`). Terminal/UI extras that the site does not expose
+ * (`cursor`, `bright_*`, and `hyprland_*`) are parsed but ignored by the generated CSS.
+ */
+export const COPPERNIGHT_THEME: PaletteTheme = {
+  name: "coppernight",
+  label: "Copper Night",
+  toml: `mode = "dark"
+
+accent = "#fab387"
+cursor = "#ed8796"
+selection = "#313244"
+muted = "#5b6078"
+
+background = "#11111b"
+dark_background = "#0b0b12"
+darker_background = "#060609"
+lighter_background = "#1e1e2e"
+
+foreground = "#cad3f5"
+dark_foreground = "#6e738d"
+light_foreground = "#b8c0e0"
+bright_foreground = "#cad3f5"
+
+red = "#ed8796"
+yellow = "#eed49f"
+orange = "#fab387"
+green = "#a6da95"
+cyan = "#8bd5ca"
+blue = "#8aadf4"
+magenta = "#c6a0f6"
+brown = "#7b5b55"
+
+bright_red = "#ed8796"
+bright_yellow = "#fab387"
+bright_green = "#a6da95"
+bright_cyan = "#8bd5ca"
+bright_blue = "#8aadf4"
+bright_magenta = "#c6a0f6"
+
+hyprland_active_border = "#fab387"
+hyprland_inactive_border = "#c6a0f6"`,
+};
+
+/**
  * Oligarchy, a propaganda-poster light theme for Omarchy by AlexanderBuzz.
  * Source: https://github.com/AlexanderBuzz/omarchy-oligarchy-theme at commit
  * 6746fb318f5682cc1896957cb941ee2125dbff75, MIT licensed (see oligarchy.LICENSE).
