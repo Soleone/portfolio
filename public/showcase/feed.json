@@ -533,16 +533,6 @@
       "source": "draft"
     },
     {
-      "id": "github:Soleone/omarchy-gilt-theme",
-      "priority": null,
-      "title": "omarchy-gilt-theme",
-      "repo": "https://github.com/Soleone/omarchy-gilt-theme",
-      "tier": null,
-      "target": null,
-      "gap": [],
-      "source": null
-    },
-    {
       "id": "local:js/citizenship",
       "priority": null,
       "title": "Civic Relay",
@@ -788,6 +778,50 @@
       "target": null,
       "gap": [],
       "source": "draft"
+    },
+    {
+      "id": "local:opensource/omarchy-gilt-theme",
+      "priority": "high",
+      "title": "Gilt",
+      "pitch": "A dark Omarchy theme of cool obsidian, warm parchment, sovereign gold, and restrained jewel tones.",
+      "description": "Parchment lettering on black stone, gold metalwork for focus and borders, and copper, jade, verdigris, lapis and amethyst as quieter accents. Ships seven wallpapers and a matching unlock screen.",
+      "kind": "other",
+      "stage": "product",
+      "year": 2026,
+      "tech": [
+        "Omarchy",
+        "Hyprland"
+      ],
+      "repo": "https://github.com/Soleone/omarchy-gilt-theme",
+      "live": "https://gilt.soleone.xyz",
+      "demo": {
+        "strategy": "hosted",
+        "local": "node preview/serve.mjs",
+        "externals": [
+          {
+            "name": "Omarchy desktop",
+            "type": "app",
+            "seam": "preview/index.html reads the theme's own colors.toml, wallpapers and unlock logo",
+            "standIn": "simulated",
+            "note": "A browser mock-up of the Omarchy desktop in the theme's real colors and wallpapers. The windows are pictures, not running apps."
+          }
+        ]
+      },
+      "media": {
+        "hero": "media/opensource-omarchy-gilt-theme/hero.png",
+        "motion": "media/opensource-omarchy-gilt-theme/motion.webp",
+        "capture": "npx -y -p @soleone/showcase@0.2.0 node preview/capture.mjs"
+      },
+      "brand": {
+        "colors": [
+          "#D4AF37",
+          "#0D0F12"
+        ]
+      },
+      "tier": "S",
+      "target": "S",
+      "gap": [],
+      "source": "showcase.json"
     }
   ]
 }
