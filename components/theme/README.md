@@ -15,7 +15,14 @@ This folder holds only what is particular to this site:
 
 - `config.ts`: the default theme, storage key, and where D lands.
 - `themes.ts`: the site's own themes on top of the built-in palettes: Game Boy (hidden; the Konami code
-  unlocks it) and showcase (the original design, hand-written in `showcase.css`).
+  unlocks it), Oligarchy (a light theme adapted from
+  [AlexanderBuzz/omarchy-oligarchy-theme](https://github.com/AlexanderBuzz/omarchy-oligarchy-theme) at commit
+  6746fb3, MIT, notice in `oligarchy.LICENSE`; shown in the picker). Upstream's `colors.toml` is kept
+  unchanged, with a compatibility block appended that sets `mode = "light"` and maps its ANSI colors to the
+  named slots (red=color1, green=color2, yellow=color3, blue=color4, magenta=color5, cyan=color6,
+  orange=color11, brown=color8). Upstream's red selection is not used: `selection` is a surface under dark
+  text here, so it stays derived from background and foreground) and showcase (the original design,
+  hand-written in `showcase.css`).
 - `head.ts`: server only. Builds the per-theme CSS and pre-paint script the root layout inlines.
 
 `app/globals.css` imports `showcase.css`, then the kit's `theme.css` and `material.css`.
