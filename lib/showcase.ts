@@ -44,6 +44,7 @@ const kindLabels: Partial<Record<string, string>> = {
   "agent-extension": "Agent extension",
   game: "Game",
   service: "Service",
+  theme: "Theme",
 }
 
 function kindLabel(kind?: string | null): string | undefined {
