@@ -366,20 +366,33 @@
       "id": "local:js/gigquest",
       "priority": "mid",
       "title": "Gig Quest",
-      "pitch": "\"Code for Rent: Your Dev Origin Story\"",
+      "pitch": "Learn JavaScript by taking freelance gigs to make rent, writing real code for clients in a story.",
+      "description": "A story-driven coding game: clients like Betty the baker bring small real problems, Chip the robot guide explains the concept, and you solve each task in a Monaco editor that runs your code and checks it against the goal.",
       "kind": "web-app",
+      "stage": "prototype",
       "year": 2026,
-      "repo": "https://github.com/Soleone/gigquest",
-      "tier": "C",
-      "target": "A",
-      "gap": [
-        "readme.pitch",
-        "readme.hero",
-        "manifest",
-        "media.motion",
-        "demo.local"
+      "tech": [
+        "TypeScript",
+        "Next.js",
+        "React",
+        "Monaco"
       ],
-      "source": "draft"
+      "repo": "https://github.com/Soleone/gigquest",
+      "live": "https://gigquest.soleone.xyz",
+      "demo": {
+        "strategy": "hosted",
+        "local": "npm run dev",
+        "externals": []
+      },
+      "media": {
+        "hero": "media/js-gigquest/hero.png",
+        "motion": "media/js-gigquest/motion.webp",
+        "capture": "npm run media:capture"
+      },
+      "tier": "S",
+      "target": "A",
+      "gap": [],
+      "source": "showcase.json"
     },
     {
       "id": "local:pi/pi-staffed",
