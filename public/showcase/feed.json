@@ -344,7 +344,7 @@
         "shadcn/ui"
       ],
       "repo": "https://github.com/Soleone/topdeck",
-      "live": "https://topdeck-soleone.vercel.app",
+      "live": "https://topdeck.soleone.xyz",
       "demo": {
         "strategy": "hosted",
         "local": "npm run dev",
