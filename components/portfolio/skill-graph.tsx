@@ -397,7 +397,6 @@ function IntroPanel({ graph, onSelect }: { graph: Graph; onSelect: (id: string) 
   return (
     <div className="flex flex-col gap-5 py-5">
       <div className="flex flex-col gap-2">
-        <h3 className="font-semibold tracking-tight">A map of what I know</h3>
         <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
           The software world as I see it, with only the parts I have worked in: {things} things across{" "}
           {graph.fields.length} fields. Fly into a field, then follow what sits inside it.
