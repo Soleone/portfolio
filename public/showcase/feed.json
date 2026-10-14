@@ -215,22 +215,46 @@
       "id": "local:pi/pi-tasks",
       "priority": "mid",
       "title": "pi-tasks",
-      "pitch": "Task management extension for the pi coding agent, designed for pluggable task backends.",
+      "pitch": "Your project's task list inside pi: browse it, edit it, and hand a task to the agent.",
+      "description": "A keyboard-driven list over the task tracker the project already uses: sq, tq, beads, a Tasks workspace or a plain TODO.md. Group by parent, edit status, priority and blockers, and press Enter to have the agent work on one.",
       "kind": "agent-extension",
+      "stage": "product",
       "year": 2026,
-      "repo": "https://github.com/Soleone/pi-tasks",
-      "media": {
-        "hero": "https://github.com/user-attachments/assets/af210b63-f993-447d-9668-3308874d493c"
-      },
-      "tier": "C",
-      "target": "A",
-      "gap": [
-        "readme.concise",
-        "manifest",
-        "media.motion",
-        "demo.local"
+      "tech": [
+        "TypeScript",
+        "pi"
       ],
-      "source": "draft"
+      "repo": "https://github.com/Soleone/pi-tasks",
+      "live": "https://pi-tasks.soleone.xyz",
+      "demo": {
+        "strategy": "browser-terminal",
+        "local": "npm run demo",
+        "externals": [
+          {
+            "name": "Model provider",
+            "type": "model",
+            "seam": "pi.registerProvider; the demo's extension registers a scripted provider (demo/browser/home/.pi/agent/extensions/demo-model.ts)",
+            "standIn": "simulated",
+            "note": "The model is scripted: it knows two of the sample tasks, and nothing is sent anywhere."
+          },
+          {
+            "name": "Task backend CLIs (sq, tq, bd, tasks-cli)",
+            "type": "app",
+            "seam": "PI_TASKS_BACKEND picks the backend; the demo sets todo-md",
+            "standIn": "omitted",
+            "note": "The tasks live in the sample project's TODO.md; the sq, tq, beads and Tasks backends need their own CLIs."
+          }
+        ]
+      },
+      "media": {
+        "hero": "media/pi-pi-tasks/hero.png",
+        "motion": "media/pi-pi-tasks/motion.webp",
+        "capture": "npm run media:capture"
+      },
+      "tier": "S",
+      "target": "A",
+      "gap": [],
+      "source": "showcase.json"
     },
     {
       "id": "local:pi/pi-git",
