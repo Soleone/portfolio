@@ -253,20 +253,15 @@
     },
     {
       "id": "local:js/portfolio-review",
-      "priority": "mid",
+      "priority": null,
       "title": "Portfolio review desk",
       "pitch": "Decide which of your projects belong in the portfolio.",
       "kind": "web-app",
       "year": 2026,
       "repo": "https://github.com/Soleone/portfolio",
       "tier": "C",
-      "target": "A",
-      "gap": [
-        "readme.hero",
-        "manifest",
-        "media.motion",
-        "demo.local"
-      ],
+      "target": null,
+      "gap": [],
       "source": "draft"
     },
     {
@@ -555,14 +550,39 @@
       "id": "local:pi/pi-topic",
       "priority": "low",
       "title": "pi-topic",
-      "pitch": "A small Pi extension that shows a persistent session topic line directly above the input editor.",
+      "pitch": "A one-line topic of what you're working on, kept right above pi's input.",
+      "description": "Each request shows its own words at once, then pi's current model sums up the session as a short topic in the background. The topic holds while the agent reads, edits and runs tools, so a glance at the pane says what it is doing.",
       "kind": "agent-extension",
+      "stage": "product",
       "year": 2026,
+      "tech": [
+        "TypeScript",
+        "pi"
+      ],
       "repo": "https://github.com/Soleone/pi-topic",
-      "tier": "C",
+      "live": "https://pi-topic.soleone.xyz",
+      "demo": {
+        "strategy": "browser-terminal",
+        "local": "npm run demo",
+        "externals": [
+          {
+            "name": "Model provider",
+            "type": "model",
+            "seam": "pi.registerProvider; the demo's extension registers a scripted provider (demo/browser/home/.pi/agent/extensions/demo-model.ts) that also answers pi-topic's topic request",
+            "standIn": "simulated",
+            "note": "The model is scripted: it knows a few prompts, the topics it returns are canned, and nothing is sent anywhere."
+          }
+        ]
+      },
+      "media": {
+        "hero": "media/pi-pi-topic/hero.png",
+        "motion": "media/pi-pi-topic/motion.webp",
+        "capture": "npm run media:capture"
+      },
+      "tier": "S",
       "target": "C",
       "gap": [],
-      "source": "draft"
+      "source": "showcase.json"
     },
     {
       "id": "github:Soleone/active_merchant",
@@ -779,12 +799,22 @@
     {
       "id": "github:Soleone/keyreps",
       "priority": "mid",
-      "title": "keyreps",
+      "title": "Key Reps",
+      "pitch": "A tiny terminal game for learning Unix and Readline keyboard shortcuts.",
+      "kind": "cli",
+      "year": 2026,
       "repo": "https://github.com/Soleone/keyreps",
-      "tier": null,
+      "media": {
+        "hero": "https://github.com/user-attachments/assets/be68bdae-51b0-480d-9062-2201e5819842"
+      },
+      "tier": "B",
       "target": "A",
-      "gap": [],
-      "source": null
+      "gap": [
+        "manifest",
+        "media.motion",
+        "demo.local"
+      ],
+      "source": "draft"
     },
     {
       "id": "github:Soleone/picross-omarchy",
