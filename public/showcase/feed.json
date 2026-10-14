@@ -801,20 +801,38 @@
       "priority": "mid",
       "title": "Key Reps",
       "pitch": "A tiny terminal game for learning Unix and Readline keyboard shortcuts.",
+      "description": "Each drill hands you a broken command line and counts the key presses you take to fix it: perfect in green, close in yellow, detours in red. Lessons build from single shortcuts to multi-step repairs, on a simulated shell.",
       "kind": "cli",
+      "stage": "product",
       "year": 2026,
-      "repo": "https://github.com/Soleone/keyreps",
-      "media": {
-        "hero": "https://github.com/user-attachments/assets/be68bdae-51b0-480d-9062-2201e5819842"
-      },
-      "tier": "B",
-      "target": "A",
-      "gap": [
-        "manifest",
-        "media.motion",
-        "demo.local"
+      "tech": [
+        "TypeScript",
+        "Node.js"
       ],
-      "source": "draft"
+      "repo": "https://github.com/Soleone/keyreps",
+      "live": "https://keyreps.soleone.xyz",
+      "demo": {
+        "strategy": "browser-terminal",
+        "local": "npm run demo",
+        "externals": [
+          {
+            "name": "Browser-reserved shortcuts",
+            "type": "app",
+            "seam": "The browser handles a few keys before the page sees them",
+            "standIn": "omitted",
+            "note": "Your browser keeps a few shortcuts for itself, such as Ctrl+W and Ctrl+T, so drills that need them work best in your own terminal."
+          }
+        ]
+      },
+      "media": {
+        "hero": "media/soleone-keyreps/hero.png",
+        "motion": "media/soleone-keyreps/motion.webp",
+        "capture": "npm run media:capture"
+      },
+      "tier": "S",
+      "target": "A",
+      "gap": [],
+      "source": "showcase.json"
     },
     {
       "id": "github:Soleone/picross-omarchy",
