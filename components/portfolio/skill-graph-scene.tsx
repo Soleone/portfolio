@@ -5,13 +5,12 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useMemo, useRef, type ComponentRef, type RefObject } from "react"
 import * as THREE from "three"
 import { cn } from "@/lib/utils"
-import { layoutFor, neighborsOf, RADIUS, type Arrangement, type SkillGraph, type SkillNode, type Vec3 } from "@/lib/skill-graph"
+import { layoutFor, neighborsOf, RADIUS, type SkillGraph, type SkillNode, type Vec3 } from "@/lib/skill-graph"
 
-export type GraphColors = { fields: THREE.Color[]; project: THREE.Color; edge: THREE.Color }
+export type GraphColors = { fields: THREE.Color[]; edge: THREE.Color }
 
 export type SceneProps = {
   graph: SkillGraph
-  arrangement: Arrangement
   focus: string | null
   hover: string | null
   // Nodes to pick out (a field's members, or search matches); null when nothing is picked out.
@@ -155,7 +154,7 @@ export default function SkillGraphScene(props: SceneProps) {
   }
 
   return (
-    <div className="relative size-full">
+    <div data-skill-scene className="relative size-full">
       <Canvas
         flat
         frameloop={props.paused ? "never" : "always"}
@@ -184,7 +183,6 @@ export default function SkillGraphScene(props: SceneProps) {
               "pointer-events-auto absolute top-0 left-0 cursor-pointer whitespace-nowrap rounded px-1 text-xs leading-tight transition-colors duration-300 select-none will-change-transform",
               node.kind === "field" && "text-2xs font-semibold uppercase tracking-wider",
               node.kind === "area" && "font-medium",
-              node.kind === "project" && "text-2xs italic",
               emphasis.node[i] === "focus" && "font-semibold text-foreground",
               emphasis.node[i] === "near" && "text-foreground",
               emphasis.node[i] !== "focus" && emphasis.node[i] !== "near" && "text-muted-foreground"
@@ -206,8 +204,8 @@ type GraphProps = SceneProps & {
   popped: RefObject<string | null>
 }
 
-function Graph({ graph, arrangement, focus, hover, highlight, colors, reducedMotion, onSelect, onHover, topology, emphasis, labels, popped }: GraphProps) {
-  const target = layoutFor(graph, arrangement)
+function Graph({ graph, focus, hover, highlight, colors, reducedMotion, onSelect, onHover, topology, emphasis, labels, popped }: GraphProps) {
+  const target = layoutFor(graph)
   // Where each node is drawn this frame. Positions outlive a change to the graph, so nodes travel from
   // wherever they were to where they now belong, and a new node starts where it will settle.
   const drawn = useRef(new Map<string, THREE.Vector3>())
@@ -220,12 +218,11 @@ function Graph({ graph, arrangement, focus, hover, highlight, colors, reducedMot
         drawn.current.set(node.id, fresh)
         return fresh
       }),
-    // A new node takes its spot from the arrangement in use when it appears, not later ones.
     [topology]
   )
   const colorOf = (i: number) => {
     const node = topology.nodes[i]
-    return node.kind === "project" ? colors.project : (colors.fields[node.fields[0] ?? 0] ?? colors.edge)
+    return colors.fields[node.fields[0] ?? 0] ?? colors.edge
   }
 
   const pop = useRef<Pop>({ index: -1, at: -Infinity, burst: true })
@@ -402,9 +399,9 @@ function NodeMark({
 
   return (
     <group ref={group}>
-      {/* Skills and areas are spheres, fields a sphere in a wireframe shell, projects turning diamonds. */}
-      <mesh ref={node.kind === "project" ? spin : undefined}>
-        {node.kind === "project" ? <octahedronGeometry args={[radius * 1.3]} /> : <sphereGeometry args={[radius, 24, 24]} />}
+      {/* Skills and areas are spheres, fields a sphere in a wireframe shell. */}
+      <mesh>
+        <sphereGeometry args={[radius, 24, 24]} />
         <meshBasicMaterial ref={core} color={color} transparent opacity={0.85} />
       </mesh>
       {node.kind === "field" && (
@@ -413,12 +410,9 @@ function NodeMark({
           <meshBasicMaterial color={color} wireframe transparent opacity={emphasis === "faded" ? 0.05 : 0.22} />
         </mesh>
       )}
-      {/* Projects are drawn in an ink color, which would glow as a smudge on light themes; their shape marks them instead. */}
-      {node.kind !== "project" && (
-        <sprite scale={radius * 7}>
-          <spriteMaterial ref={halo} map={glow()} color={color} transparent opacity={0.3} depthWrite={false} />
-        </sprite>
-      )}
+      <sprite scale={radius * 7}>
+        <spriteMaterial ref={halo} map={glow()} color={color} transparent opacity={0.3} depthWrite={false} />
+      </sprite>
       {/* A larger, invisible target: the dots alone are too small to hit. */}
       <mesh {...handlers}>
         <sphereGeometry args={[Math.max(radius * 2.4, 0.45), 8, 8]} />
@@ -643,7 +637,8 @@ function launch(pool: Pulse[], topology: Topology, edge: number, from: number, s
 }
 
 // The camera orbits whatever is in view: the focused node, the highlighted group, or the whole graph,
-// and moves closer the narrower that is. Turning stays with the visitor; zoom is ours, so the wheel scrolls the page.
+// and moves closer the narrower that is. Turning stays with the visitor. The plain wheel scrolls the page;
+// Shift with it zooms. Ctrl would be the usual key, but browsers take that for zooming the whole page.
 function Rig({
   topology,
   positions,
@@ -664,6 +659,12 @@ function Rig({
   const size = useThree((state) => state.size)
   const goal = useMemo(() => new THREE.Vector3(), [])
   const shift = useMemo(() => new THREE.Vector3(), [])
+  // The visitor's zoom on top of ours, starting over whenever the view moves somewhere else.
+  const zoom = useRef(1)
+
+  useEffect(() => {
+    zoom.current = 1
+  }, [focus, highlight])
 
   useEffect(() => {
     const element = controls.current?.domElement
@@ -671,6 +672,17 @@ function Rig({
     // One finger scrolls the page past the graph; two fingers turn it.
     controls.current.touches = { ONE: undefined as unknown as THREE.TOUCH, TWO: THREE.TOUCH.ROTATE }
     element.style.touchAction = "pan-y"
+    const onWheel = (event: WheelEvent) => {
+      if (!event.shiftKey) return
+      event.preventDefault()
+      // Some browsers turn a shifted wheel sideways, so the delta can arrive on either axis.
+      const delta = event.deltaY || event.deltaX
+      zoom.current = THREE.MathUtils.clamp(zoom.current * Math.exp(delta * 0.003), 0.6, 1.6)
+    }
+    // On the wrapper, so the wheel zooms over the labels too.
+    const scene = element.closest("[data-skill-scene]") ?? element
+    scene.addEventListener("wheel", onWheel as EventListener, { passive: false })
+    return () => scene.removeEventListener("wheel", onWheel as EventListener)
   }, [])
 
   useFrame((_, delta) => {
@@ -683,7 +695,9 @@ function Rig({
     const members = highlight ? positions.filter((_, i) => topology.nodes[i] && highlight.has(topology.nodes[i].id)) : []
     if (focused !== undefined) {
       goal.copy(positions[focused])
-      distance = 10
+      // Close enough that the node and its neighbours fill the stage; a field has more around it.
+      const kind = topology.nodes[focused]?.kind
+      distance = kind === "field" ? 8.5 : kind === "area" ? 7.5 : 6.5
     } else if (members.length > 0) {
       members.forEach((member) => goal.add(member))
       goal.divideScalar(members.length)
@@ -694,6 +708,7 @@ function Rig({
 
     // A portrait stage is narrower than it is tall, so the camera backs off to keep the sides in.
     distance /= Math.min(1, size.width / size.height / 0.95)
+    distance *= zoom.current
 
     const step = reducedMotion ? 1 : ease(2.2, delta)
     shift.copy(goal).sub(orbit.target).multiplyScalar(step)

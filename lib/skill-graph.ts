@@ -56,7 +56,7 @@ export type SkillNode = {
   id: string
   label: string
   // A field is a top-level entry, an area holds other entries, a skill holds none.
-  kind: "field" | "area" | "skill" | "project"
+  kind: "field" | "area" | "skill"
   // The shallowest level it appears at.
   depth: number
   // Fields it sits under (by index into graph.fields); the first one colors it.
@@ -67,11 +67,9 @@ export type SkillNode = {
   children: string[]
   // Projects whose tech lists it.
   projects: ProjectRef[]
-  // For project nodes.
-  project?: { description: string; year: string; type: string; href: string; live?: string }
 }
 
-// Parent to child, or project to the skill it uses.
+// Parent to child.
 export type SkillEdge = { source: string; target: string }
 
 export type SkillGraph = {
@@ -82,7 +80,6 @@ export type SkillGraph = {
   adjacency: Map<string, string[]>
 }
 
-export type Arrangement = "map" | "web"
 export type Vec3 = [number, number, number]
 
 // Project tech lists are free text; these name the node they mean when the spelling differs.
@@ -98,7 +95,7 @@ const spelling = (text: string) =>
     .replace(/\.js$/, "")
     .replace(/[^a-z0-9+#]/g, "")
 
-export function buildGraph(rows: OutlineRow[], projects: Project[], { withProjects = false } = {}): SkillGraph {
+export function buildGraph(rows: OutlineRow[], projects: Project[]): SkillGraph {
   const byId = new Map<string, SkillNode>()
   const nodes: SkillNode[] = []
   const fields: SkillNode[] = []
@@ -138,25 +135,7 @@ export function buildGraph(rows: OutlineRow[], projects: Project[], { withProjec
     const used = [...new Set(project.tech.map((tech) => byName.get(spelling(techAliases[tech.toLowerCase()] ?? tech))))].filter(
       (node) => node !== undefined
     )
-    if (used.length === 0) continue
     for (const node of used) node.projects.push({ title: project.title, href: project.href })
-    if (!withProjects) continue
-    // The project hangs between the things it was built with.
-    const node: SkillNode = {
-      id: `project:${slug(project.title)}`,
-      label: project.title,
-      kind: "project",
-      depth: Math.max(...used.map((skill) => skill.depth)) + 1,
-      fields: [...new Set(used.flatMap((skill) => skill.fields))],
-      paths: [],
-      parents: [],
-      children: [],
-      projects: [],
-      project: { description: project.description, year: project.year, type: project.type, href: project.href, live: project.live },
-    }
-    nodes.push(node)
-    byId.set(node.id, node)
-    for (const skill of used) link(node, skill)
   }
 
   const adjacency = new Map<string, string[]>(nodes.map((node) => [node.id, []]))
@@ -184,7 +163,7 @@ export function matchRank(label: string, query: string) {
   return have.includes(want) ? 3 : null
 }
 
-const kindOrder: Record<SkillNode["kind"], number> = { field: 0, area: 1, skill: 2, project: 3 }
+const kindOrder: Record<SkillNode["kind"], number> = { field: 0, area: 1, skill: 2 }
 
 /** Nodes matching a query, best first: closer matches, then broader things, then shorter names. */
 export function searchGraph(graph: SkillGraph, query: string) {
@@ -201,9 +180,8 @@ export function searchGraph(graph: SkillGraph, query: string) {
     .map((hit) => hit.node)
 }
 
-// Layouts. Each arrangement is the same graph settled under a different pull, so switching one
-// moves every node from where it is to where it now belongs. Each node starts from a spot seeded by
-// its id, so a layout is the same on every load and barely moves when a node is added elsewhere.
+// The layout. Each node starts from a spot seeded by its id, so the map is the same on every load
+// and barely moves when a node is added elsewhere.
 
 /** How far the outermost node sits from the center, in scene units. */
 export const RADIUS = 6.5
@@ -230,18 +208,10 @@ function sphere(count: number, radius: number): Vec3[] {
 
 type Pull = { anchors: Map<string, Vec3>; strength: number }
 
-function settle(graph: SkillGraph, pull?: Pull, iterations = 260): Map<string, Vec3> {
+function settle(graph: SkillGraph, pull: Pull, iterations = 260): Map<string, Vec3> {
   const { nodes, edges } = graph
   if (nodes.length === 0) return new Map()
-  const position = nodes.map((node): Vec3 => {
-    const anchor = pull?.anchors.get(node.id)
-    if (anchor) return [...anchor]
-    const random = seeded(node.id)
-    const theta = random() * Math.PI * 2
-    const phi = Math.acos(2 * random() - 1)
-    const radius = 4 + random() * 2
-    return [radius * Math.sin(phi) * Math.cos(theta), radius * Math.cos(phi), radius * Math.sin(phi) * Math.sin(theta)]
-  })
+  const position = nodes.map((node): Vec3 => [...(pull.anchors.get(node.id) ?? [0, 0, 0])])
   const index = new Map(nodes.map((node, i) => [node.id, i]))
   const springs = edges.map((edge) => [index.get(edge.source)!, index.get(edge.target)!] as const)
   const force = nodes.map((): Vec3 => [0, 0, 0])
@@ -277,18 +247,18 @@ function settle(graph: SkillGraph, pull?: Pull, iterations = 260): Map<string, V
     }
 
     nodes.forEach((node, i) => {
-      const anchor = pull?.anchors.get(node.id)
+      const anchor = pull.anchors.get(node.id)
       for (let axis = 0; axis < 3; axis++) {
         // A faint pull to the middle keeps loose ends from drifting off.
         force[i][axis] -= position[i][axis] * 0.04
-        if (anchor) force[i][axis] += (anchor[axis] - position[i][axis]) * pull!.strength
+        if (anchor) force[i][axis] += (anchor[axis] - position[i][axis]) * pull.strength
         position[i][axis] += Math.max(-0.6, Math.min(0.6, force[i][axis] * 0.08)) * cooling
       }
     })
   }
 
-  // Center the result so the camera can orbit the middle, and size it to one radius so every
-  // arrangement fills the same frame.
+  // Center the result so the camera can orbit the middle, and size it to one radius so the camera
+  // frames it the same whatever the outline holds.
   const center = [0, 1, 2].map((axis) => position.reduce((sum, p) => sum + p[axis], 0) / position.length)
   const centered = position.map((p) => p.map((value, axis) => value - center[axis]) as Vec3)
   const scale = RADIUS / (Math.max(...centered.map((p) => Math.hypot(...p))) || 1)
@@ -305,9 +275,7 @@ function byMap(graph: SkillGraph) {
   graph.fields.forEach((field, i) => anchors.set(field.id, points[i]))
   const rest = graph.nodes.filter((node) => !anchors.has(node.id)).sort((a, b) => a.depth - b.depth)
   for (const node of rest) {
-    const from = [...node.parents, ...(node.kind === "project" ? node.children : [])]
-      .map((id) => anchors.get(id))
-      .filter((anchor) => anchor !== undefined)
+    const from = node.parents.map((id) => anchors.get(id)).filter((anchor) => anchor !== undefined)
     const random = seeded(node.id)
     // Siblings start a little apart, so they fan out instead of stacking on their parent's line.
     const direction = [0, 1, 2].map((axis) => from.reduce((sum, anchor) => sum + anchor[axis], 0) + (random() - 0.5) * 1.2)
@@ -318,11 +286,10 @@ function byMap(graph: SkillGraph) {
   return settle(graph, { anchors, strength: 0.3 })
 }
 
-const layouts = new WeakMap<SkillGraph, Partial<Record<Arrangement, Map<string, Vec3>>>>()
+const layouts = new WeakMap<SkillGraph, Map<string, Vec3>>()
 
-export function layoutFor(graph: SkillGraph, arrangement: Arrangement): Map<string, Vec3> {
-  const cached = layouts.get(graph) ?? {}
-  layouts.set(graph, cached)
-  cached[arrangement] ??= arrangement === "map" ? byMap(graph) : settle(graph)
-  return cached[arrangement]
+export function layoutFor(graph: SkillGraph): Map<string, Vec3> {
+  let layout = layouts.get(graph)
+  if (!layout) layouts.set(graph, (layout = byMap(graph)))
+  return layout
 }

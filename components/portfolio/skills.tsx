@@ -7,7 +7,7 @@ export function Skills() {
 
   return (
     <section id="skills" className="mx-auto max-w-5xl px-6 py-16 md:py-24">
-      <SectionHeading label="Toolkit" title="A map of what I know" />
+      <SectionHeading label="My skills" title="A map of what I know" />
 
       {/* The map is drawn for the eye; this is the same outline for readers and crawlers. */}
       <ul className="sr-only">
