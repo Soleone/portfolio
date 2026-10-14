@@ -29,7 +29,7 @@ import { Button } from "@/components/ui/button"
 import { Kbd } from "@/components/ui/kbd"
 import { cn } from "@/lib/utils"
 import { isInteractiveTarget, revealTheme, useTheme, type ThemeOption } from "@/components/soleone/theme"
-import { ThemePreviewCard } from "./preview-card"
+import { ThemePreviewCard, type ThemeTagline } from "./preview-card"
 import { Sheen } from "@/components/soleone/material/sheen"
 
 // The ring. Cards stand on a cylinder seen from outside: the front card faces the viewer and its
@@ -48,6 +48,9 @@ const KEY_PRESS_MS = 140 // how long Enter holds the Select button down
 
 const spring = (stiffness: number, damping: number) => ({ type: "spring" as const, stiffness, damping })
 const turnSpring = spring(260, 30)
+// The picker pops open from the middle of the screen and overshoots a touch, like the flip card's
+// arrow. It fades in faster than it grows, so the growth shows.
+const appearSpring = spring(380, 26)
 
 // A fling coasts on with exponential friction and lands on a card. The time constant matches the
 // throw (distance = velocity * power), so the ring leaves the finger at the speed it was moving.
@@ -87,7 +90,8 @@ const stretch = (value: number, count: number) => {
   return edge + (value - edge) * RUBBER
 }
 
-export function ThemePicker() {
+/** `tagline` is the sample line every card shows; it defaults to the portfolio's. */
+export function ThemePicker({ tagline }: { tagline?: ThemeTagline } = {}) {
   const { theme, themes: all, setTheme } = useTheme()
   // A hidden theme joins the ring only while it is the one in use.
   const themes = all.filter((candidate) => !candidate.hidden || candidate.name === theme)
@@ -102,6 +106,10 @@ export function ThemePicker() {
   // before the choice goes through. CSS :active would miss touches, which it often skips.
   const [keyPressed, setKeyPressed] = useState(false)
   const [held, setHeld] = useState(false)
+  // Mounting the ring is the slow part of opening, so it mounts hidden once the page is idle and stays.
+  const [warm, setWarm] = useState(false)
+  // The picker's size as it pops open.
+  const appear = useMotionValue(1)
 
   // Continuous ring position in cards; the front card is the one it settles on.
   const position = useMotionValue(0)
@@ -155,6 +163,15 @@ export function ThemePicker() {
   }, [])
 
   useEffect(() => {
+    if (typeof requestIdleCallback === "undefined") {
+      const timer = window.setTimeout(() => setWarm(true), 1000)
+      return () => clearTimeout(timer)
+    }
+    const idle = requestIdleCallback(() => setWarm(true), { timeout: 3000 })
+    return () => cancelIdleCallback(idle)
+  }, [])
+
+  useEffect(() => {
     if (!open) return
     const measure = () => setFit(fitToWindow())
     window.addEventListener("resize", measure)
@@ -176,6 +193,10 @@ export function ThemePicker() {
       position.jump(start)
       setFront(start)
       target.current = start
+      if (!reduced) {
+        appear.jump(0.4)
+        animate(appear, 1, appearSpring)
+      }
     }
     setOpen(next)
   }
@@ -373,7 +394,12 @@ export function ThemePicker() {
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root
+      open={open}
+      onOpenChange={onOpenChange}
+      // A chosen theme's reveal hid the cards; they come back, still hidden, for the next open.
+      onOpenChangeComplete={(isOpen) => !isOpen && setRevealing(false)}
+    >
       <Dialog.Trigger
         render={
           <Button
@@ -392,7 +418,7 @@ export function ThemePicker() {
           </Button>
         }
       />
-      <Dialog.Portal>
+      <Dialog.Portal keepMounted={warm}>
         <Dialog.Backdrop
           className={cn(
             "fixed inset-0 z-50 bg-background/55 duration-200 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
@@ -406,7 +432,7 @@ export function ThemePicker() {
           onWheel={onWheel}
           onClick={onClick}
           className={cn(
-            "fixed inset-0 z-50 flex touch-none flex-col items-center justify-center overflow-hidden text-foreground outline-none select-none duration-200 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+            "fixed inset-0 z-50 flex touch-none flex-col items-center justify-center overflow-hidden text-foreground outline-none select-none duration-200 data-open:duration-75 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
             revealing && "invisible",
           )}
         >
@@ -418,77 +444,84 @@ export function ThemePicker() {
             }
           />
 
-          <div className="text-center">
-            <Dialog.Title className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
-              Theme
-            </Dialog.Title>
-            <div aria-live="polite" className="mt-1 h-9 overflow-hidden">
-              {query ? (
-                <div className="text-3xl font-semibold tracking-tight whitespace-pre">
-                  {query}
-                  <span className="ml-0.5 inline-block h-[0.9em] w-[2px] translate-y-[0.1em] animate-pulse bg-primary" />
-                </div>
-              ) : (
-                <motion.div
-                  key={frontTheme?.name}
-                  initial={reduced ? false : { y: 14, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={spring(420, 32)}
-                  className="text-3xl font-semibold tracking-tight"
-                >
-                  {frontTheme?.label}
-                </motion.div>
-              )}
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground tabular-nums">
-              {count === 0
-                ? "No theme matches"
-                : query
-                  ? `${frontTheme?.label} · ${front + 1} of ${count}`
-                  : `${String(front + 1).padStart(2, "0")} / ${String(count).padStart(2, "0")}`}
-              {frontTheme?.name === theme && " · current"}
-            </div>
-          </div>
-
-          {/* The stage takes focus so the arrow keys turn the ring as soon as it opens. */}
-          <div
-            ref={stage}
-            tabIndex={0}
-            role="listbox"
-            aria-label="Themes"
-            aria-activedescendant={frontTheme ? `theme-card-${frontTheme.name}` : undefined}
-            className="relative my-6 w-full outline-none"
-            style={{ height: (CARD_H + 80) * fit }}
+          <motion.div
+            className="flex w-full flex-col items-center"
+            style={{ scale: appear }}
           >
-            <div className="absolute top-1/2 left-1/2" style={{ transform: `scale(${fit})` }}>
-              {!revealing &&
-                shown.map((candidate, index) => (
-                  <RingCard
-                    key={candidate.name}
-                    theme={candidate}
-                    index={index}
-                    count={count}
-                    position={position}
-                    isFront={index === front}
-                    tilt={index === front && !dragging && !reduced}
-                    aimRef={frontAim}
-                    pressed={index === front && (keyPressed || held)}
-                  />
-                ))}
+            <div className="text-center">
+              <Dialog.Title className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                Theme
+              </Dialog.Title>
+              <div aria-live="polite" className="mt-1 h-9 overflow-hidden">
+                {query ? (
+                  <div className="text-3xl font-semibold tracking-tight whitespace-pre">
+                    {query}
+                    <span className="ml-0.5 inline-block h-[0.9em] w-[2px] translate-y-[0.1em] animate-pulse bg-primary" />
+                  </div>
+                ) : (
+                  <motion.div
+                    key={frontTheme?.name}
+                    initial={reduced ? false : { y: 14, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={spring(420, 32)}
+                    className="text-3xl font-semibold tracking-tight"
+                  >
+                    {frontTheme?.label}
+                  </motion.div>
+                )}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground tabular-nums">
+                {count === 0
+                  ? "No theme matches"
+                  : query
+                    ? `${frontTheme?.label} · ${front + 1} of ${count}`
+                    : `${String(front + 1).padStart(2, "0")} / ${String(count).padStart(2, "0")}`}
+                {frontTheme?.name === theme && " · current"}
+              </div>
             </div>
-          </div>
 
-          <div className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
-            <span>Drag or</span>
-            <Kbd>←</Kbd>
-            <Kbd>→</Kbd>
-            <span className="mr-2">to browse</span>
-            <Kbd>Enter</Kbd>
-            <span className="mr-2">select</span>
-            <span className="mr-2">type to filter</span>
-            <Kbd>Esc</Kbd>
-            <span>{query ? "clear" : "close"}</span>
-          </div>
+            {/* The stage takes focus so the arrow keys turn the ring as soon as it opens. */}
+            <div
+              ref={stage}
+              tabIndex={0}
+              role="listbox"
+              aria-label="Themes"
+              aria-activedescendant={frontTheme ? `theme-card-${frontTheme.name}` : undefined}
+              className="relative my-6 w-full outline-none"
+              style={{ height: (CARD_H + 80) * fit }}
+            >
+              <div className="absolute top-1/2 left-1/2" style={{ transform: `scale(${fit})` }}>
+                {!revealing &&
+                  shown.map((candidate, index) => (
+                    <RingCard
+                      key={candidate.name}
+                      theme={candidate}
+                      index={index}
+                      count={count}
+                      position={position}
+                      isFront={index === front}
+                      tilt={index === front && !dragging && !reduced}
+                      aimRef={frontAim}
+                      pressed={index === front && (keyPressed || held)}
+                      taglineText={tagline?.text}
+                      taglineHighlight={tagline?.highlight}
+                    />
+                  ))}
+              </div>
+            </div>
+
+            <div className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
+              <span>Drag or</span>
+              <Kbd>←</Kbd>
+              <Kbd>→</Kbd>
+              <span className="mr-2">to browse</span>
+              <Kbd>Enter</Kbd>
+              <span className="mr-2">select</span>
+              <span className="mr-2">type to filter</span>
+              <Kbd>Esc</Kbd>
+              <span>{query ? "clear" : "close"}</span>
+            </div>
+          </motion.div>
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>
@@ -509,6 +542,8 @@ const RingCard = memo(function RingCard({
   tilt,
   aimRef,
   pressed,
+  taglineText,
+  taglineHighlight,
 }: {
   theme: ThemeOption
   index: number
@@ -518,6 +553,9 @@ const RingCard = memo(function RingCard({
   tilt: boolean
   aimRef: RefObject<FrontAim | null> // where the front card takes a touch tilt from the ring's gestures
   pressed: boolean
+  // Strings rather than an object, so a tagline passed inline does not defeat the memo.
+  taglineText?: string
+  taglineHighlight?: string
 }) {
   // A filtered ring keeps the full ring's spacing, so a few matches sit side by side, not spread round.
   const slots = Math.max(count, RING_SLOTS)
@@ -631,7 +669,14 @@ const RingCard = memo(function RingCard({
         className="relative size-full transform-3d"
         style={{ rotateX, rotateY }}
       >
-        <ThemePreviewCard theme={theme} depth={1} selectable={isFront} pressed={pressed} className="size-full">
+        <ThemePreviewCard
+          theme={theme}
+          tagline={taglineText && taglineHighlight ? { text: taglineText, highlight: taglineHighlight } : undefined}
+          depth={1}
+          selectable={isFront}
+          pressed={pressed}
+          className="size-full"
+        >
           <motion.div aria-hidden className="absolute inset-0 rounded-3xl bg-black" style={{ opacity: shade }} />
           <Sheen
             glareX={glareX}

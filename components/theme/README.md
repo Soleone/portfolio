@@ -4,7 +4,7 @@ The theme kit itself comes from the soleone shadcn registry
 ([Soleone/shadcn-components](https://github.com/Soleone/shadcn-components)) and is installed under
 `components/soleone/`:
 
-- `theme`: palette parser, built-in palettes, the head builder, `ThemeProvider` / `useTheme` (D flips dark
+- `theme`: palette parser, built-in palettes (every app gets the same list), the head builder, `ThemeProvider` / `useTheme` (D flips dark
   and light), `revealTheme`, and `theme.css` mapping the palette slots onto the shadcn tokens.
 - `theme-picker`: `ThemePicker`, the palette button and the 3D card ring it opens (T opens it from anywhere).
 - `material`: the grain, glare and rim light, and the shadow and type tokens (`material.css`).
@@ -14,23 +14,9 @@ Update them with `pnpm dlx shadcn add @soleone/theme-picker --overwrite`. Change
 This folder holds only what is particular to this site:
 
 - `config.ts`: the default theme, storage key, and where D lands.
-- `themes.ts`: the site's own themes on top of the built-in palettes: Game Boy (hidden; the Konami code
-  unlocks it), Copper Night (an Omarchy theme from
-  [hembramnishant50-glitch/omarchy-coppernight-theme](https://github.com/hembramnishant50-glitch/omarchy-coppernight-theme)
-  at commit b1d0f8cbcc71c3ccd97057fddbb52d979efa7add; shown in the picker). Copper Night embeds
-  upstream's `colors.toml` unchanged and maps its named slots directly, including `mode`, `selection`,
-  `orange`, and `brown`; no compatibility overrides are needed. The parser derives only missing
-  contrast-aware slots (`on_accent`, `on_red`, `muted_foreground`) and the generated CSS ignores the
-  upstream terminal/desktop extras (`cursor`, `bright_*`, `hyprland_*`). Upstream's README claims MIT,
-  but the referenced LICENSE file is absent at that revision, so no notice is included. Oligarchy (a light
-  theme adapted from
-  [AlexanderBuzz/omarchy-oligarchy-theme](https://github.com/AlexanderBuzz/omarchy-oligarchy-theme) at commit
-  6746fb3, MIT, notice in `oligarchy.LICENSE`; shown in the picker). Upstream's `colors.toml` is kept
-  unchanged, with a compatibility block appended that sets `mode = "light"` and maps its ANSI colors to the
-  named slots (red=color1, green=color2, yellow=color3, blue=color4, magenta=color5, cyan=color6,
-  orange=color11, brown=color8). Upstream's red selection is not used: `selection` is a surface under dark
-  text here, so it stays derived from background and foreground) and showcase (the original design,
-  hand-written in `showcase.css`).
+- `themes.ts`: showcase, the site's original design (hand-written in `showcase.css`), on top of the
+  registry's built-in palettes. Those include Copper Night, Oligarchy and the hidden Game Boy theme, which
+  `components/portfolio/easter-eggs.tsx` unlocks with the Konami code.
 - `head.ts`: server only. Builds the per-theme CSS and pre-paint script the root layout inlines.
 
 `app/globals.css` imports `showcase.css`, then the kit's `theme.css` and `material.css`.
