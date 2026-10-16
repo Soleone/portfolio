@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/soleone/theme";
 import { cn } from "@/lib/utils";
-import { DEFAULT_THEME, HOTKEY_FALLBACKS, THEME_STORAGE_KEY } from "@/components/theme/config";
+import { DEFAULT_THEME, THEME_STORAGE_KEY } from "@/components/theme/config";
 import { defaultThemeIsDark, themeOptions, themeScript, themeStyles } from "@/components/theme/head";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
@@ -57,7 +57,7 @@ export default function RootLayout({
       <body
         className="antialiased"
       >
-        <ThemeProvider themes={themeOptions} storageKey={THEME_STORAGE_KEY} hotkeyFallbacks={HOTKEY_FALLBACKS}>
+        <ThemeProvider themes={themeOptions} storageKey={THEME_STORAGE_KEY}>
           {children}
         </ThemeProvider>
       </body>
