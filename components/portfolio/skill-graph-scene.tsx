@@ -31,6 +31,18 @@ type Emphasis = "focus" | "near" | "rest" | "faded"
 const SEGMENTS = 10 // straight pieces per curved edge
 const PULSES = 64
 
+const REVEAL_DELAY = { field: 0, area: 0.16, skill: 0.32 }
+const REVEAL_FADE = 0.28
+const REVEAL_DURATION = REVEAL_DELAY.skill + REVEAL_FADE
+
+type Reveal = { visible: boolean; startedAt: number | null; elapsed: number; complete: boolean }
+
+function revealOpacity(kind: SkillNode["kind"], reveal: Reveal) {
+  if (reveal.complete) return 1
+  const progress = THREE.MathUtils.clamp((reveal.elapsed - REVEAL_DELAY[kind]) / REVEAL_FADE, 0, 1)
+  return 1 - (1 - progress) ** 3
+}
+
 // The graph by index, which is how the buffers and the frame loop address it.
 type Topology = {
   nodes: SkillNode[]
@@ -141,6 +153,23 @@ export default function SkillGraphScene(props: SceneProps) {
   const topology = useMemo(() => topologyOf(graph), [graph])
   const emphasis = useMemo(() => emphasisFor(graph, { focus, hover, highlight }), [graph, focus, hover, highlight])
   const labels = useRef<(HTMLButtonElement | null)[]>([])
+  const stage = useRef<HTMLDivElement>(null)
+  const reveal = useRef<Reveal>({ visible: false, startedAt: null, elapsed: 0, complete: false })
+
+  useEffect(() => {
+    if (!stage.current) return
+    // The renderer warms just off screen; save the entrance for when the map is actually visible.
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || entry.intersectionRatio < 0.15) return
+        reveal.current.visible = true
+        observer.disconnect()
+      },
+      { threshold: 0.15 }
+    )
+    observer.observe(stage.current)
+    return () => observer.disconnect()
+  }, [])
   const colors = useMemo(
     () => ({ fields: props.colors.fields.map((color) => new THREE.Color(color)), edge: new THREE.Color(props.colors.edge) }),
     [props.colors]
@@ -159,7 +188,14 @@ export default function SkillGraphScene(props: SceneProps) {
   }
 
   return (
-    <div data-skill-scene className="relative size-full">
+    <div
+      ref={stage}
+      data-skill-scene
+      className="relative size-full"
+      onPointerDownCapture={() => {
+        reveal.current.complete = true
+      }}
+    >
       <Canvas
         flat
         frameloop={props.paused ? "never" : "always"}
@@ -169,7 +205,7 @@ export default function SkillGraphScene(props: SceneProps) {
         onPointerMissed={props.onClear}
         className="touch-pan-y"
       >
-        <Graph {...props} colors={colors} onSelect={select} popped={popped} topology={topology} emphasis={emphasis} labels={labels} />
+        <Graph {...props} colors={colors} onSelect={select} popped={popped} topology={topology} emphasis={emphasis} labels={labels} reveal={reveal} />
       </Canvas>
       {/* Labels are plain DOM over the canvas, placed each frame, so they use the page's type and tokens. */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -214,9 +250,10 @@ type GraphProps = Omit<SceneProps, "colors"> & {
   emphasis: ReturnType<typeof emphasisFor>
   labels: RefObject<(HTMLButtonElement | null)[]>
   popped: RefObject<string | null>
+  reveal: RefObject<Reveal>
 }
 
-function Graph({ graph, layout, focus, hover, highlight, colors, reducedMotion, onSelect, onHover, topology, emphasis, labels, popped }: GraphProps) {
+function Graph({ graph, layout, focus, hover, highlight, colors, reducedMotion, onSelect, onHover, topology, emphasis, labels, popped, reveal }: GraphProps) {
   const target = useMemo(() => (layout ? new Map(layout) : layoutFor(graph)), [graph, layout])
   // Unit geometry is uploaded once per shape, rather than once for every node and hit target.
   const geometries = useMemo<NodeGeometries>(
@@ -257,6 +294,14 @@ function Graph({ graph, layout, focus, hover, highlight, colors, reducedMotion, 
   // Seconds left until the graph is back to its usual pace after a blast.
   const recovering = useRef(0)
 
+  // Advance the shared timeline before any nodes, edges, or labels read it.
+  useFrame((state) => {
+    const entrance = reveal.current
+    if (entrance.visible && entrance.startedAt === null) entrance.startedAt = state.clock.elapsedTime
+    entrance.elapsed = entrance.startedAt === null ? 0 : state.clock.elapsedTime - entrance.startedAt
+    if (reducedMotion || focus || hover || highlight || entrance.elapsed >= REVEAL_DURATION) entrance.complete = true
+  }, -2)
+
   useFrame((state, delta) => {
     const now = state.clock.elapsedTime
     const clicked = popped.current === null ? undefined : topology.index.get(popped.current)
@@ -293,8 +338,8 @@ function Graph({ graph, layout, focus, hover, highlight, colors, reducedMotion, 
 
   return (
     <>
-      <Edges topology={topology} positions={positions} emphasis={emphasis.edge} color={colors.edge} />
-      <Pulses topology={topology} positions={positions} active={emphasis.active} highlight={highlight} colorOf={colorOf} reducedMotion={reducedMotion} />
+      <Edges topology={topology} positions={positions} emphasis={emphasis.edge} color={colors.edge} reveal={reveal} />
+      <Pulses topology={topology} positions={positions} active={emphasis.active} highlight={highlight} colorOf={colorOf} reducedMotion={reducedMotion} reveal={reveal} />
       {topology.nodes.map((node, i) => (
         <NodeMark
           key={node.id}
@@ -304,6 +349,7 @@ function Graph({ graph, layout, focus, hover, highlight, colors, reducedMotion, 
           position={positions[i]}
           radius={topology.radius[i]}
           geometries={geometries}
+          reveal={reveal}
           color={colorOf(i)}
           emphasis={emphasis.node[i]}
           onSelect={onSelect}
@@ -313,7 +359,7 @@ function Graph({ graph, layout, focus, hover, highlight, colors, reducedMotion, 
       <Burst pop={pop} positions={positions} radius={topology.radius} colorOf={colorOf} />
       <Rig topology={topology} positions={positions} focus={focus} highlight={highlight} hover={hover} reducedMotion={reducedMotion} />
       {/* After the rig, so labels are placed for the camera this frame is drawn from. */}
-      <LabelTracker topology={topology} positions={positions} emphasis={emphasis.node} labels={labels} />
+      <LabelTracker topology={topology} positions={positions} emphasis={emphasis.node} labels={labels} reveal={reveal} />
     </>
   )
 }
@@ -323,11 +369,13 @@ function LabelTracker({
   positions,
   emphasis,
   labels,
+  reveal,
 }: {
   topology: Topology
   positions: THREE.Vector3[]
   emphasis: Emphasis[]
   labels: RefObject<(HTMLButtonElement | null)[]>
+  reveal: RefObject<Reveal>
 }) {
   const camera = useThree((state) => state.camera as THREE.PerspectiveCamera)
   const size = useThree((state) => state.size)
@@ -357,7 +405,7 @@ function LabelTracker({
       const level = emphasis[i]
       const reach = node.kind === "field" ? Infinity : node.kind === "area" ? middle + 2 : middle - 2.5
       const near = THREE.MathUtils.clamp((reach - distance) / 2, 0, 1)
-      const opacity = level === "focus" || level === "near" ? 1 : level === "faded" ? 0.15 * near : (1 - depth * 0.6) * near
+      const opacity = (level === "focus" || level === "near" ? 1 : level === "faded" ? 0.15 * near : (1 - depth * 0.6) * near) * revealOpacity(node.kind, reveal.current)
       label.style.opacity = opacity.toFixed(2)
       label.style.pointerEvents = opacity > 0.3 ? "auto" : "none"
     })
@@ -373,6 +421,7 @@ function NodeMark({
   position,
   radius,
   geometries,
+  reveal,
   color,
   emphasis,
   onSelect,
@@ -384,6 +433,7 @@ function NodeMark({
   position: THREE.Vector3
   radius: number
   geometries: NodeGeometries
+  reveal: RefObject<Reveal>
   color: THREE.Color
   emphasis: Emphasis
   onSelect: (id: string) => void
@@ -395,28 +445,36 @@ function NodeMark({
   const core = useRef<THREE.MeshBasicMaterial>(null)
   const halo = useRef<THREE.SpriteMaterial>(null)
   const spin = useRef<THREE.Mesh>(null)
+  const shell = useRef<THREE.MeshBasicMaterial>(null)
+  const opacity = useRef({ core: 0.85, halo: 0.3 })
 
   useFrame((state, delta) => {
     if (!group.current || !core.current) return
     group.current.position.copy(position)
+    const entrance = revealOpacity(node.kind, reveal.current)
     const step = ease(8, delta)
     const scale = emphasis === "focus" ? (node.kind === "field" ? 1.2 : 1.5) : emphasis === "near" ? 1.15 : 1
     size.current = THREE.MathUtils.lerp(size.current, scale, step)
     const popping = pop.current.index === index ? bubble(state.clock.elapsedTime - pop.current.at) : 1
     group.current.scale.setScalar(size.current * popping)
-    core.current.opacity = THREE.MathUtils.lerp(core.current.opacity, nodeOpacity[emphasis], step)
+    opacity.current.core = THREE.MathUtils.lerp(opacity.current.core, nodeOpacity[emphasis], step)
+    core.current.opacity = opacity.current.core * entrance
     // The focused node breathes.
     const breath = emphasis === "focus" ? 0.55 + Math.sin(state.clock.elapsedTime * 3) * 0.15 : emphasis === "faded" ? 0.05 : 0.32
-    if (halo.current) halo.current.opacity = THREE.MathUtils.lerp(halo.current.opacity, breath, step)
+    opacity.current.halo = THREE.MathUtils.lerp(opacity.current.halo, breath, step)
+    if (halo.current) halo.current.opacity = opacity.current.halo * entrance
+    if (shell.current) shell.current.opacity = (emphasis === "faded" ? 0.05 : 0.22) * entrance
     if (spin.current) spin.current.rotation.y += delta * 0.4
   })
 
   const handlers = {
     onClick: (event: { stopPropagation: () => void }) => {
+      if (revealOpacity(node.kind, reveal.current) < 0.3) return
       event.stopPropagation()
       onSelect(node.id)
     },
     onPointerOver: (event: { stopPropagation: () => void }) => {
+      if (revealOpacity(node.kind, reveal.current) < 0.3) return
       event.stopPropagation()
       onHover(node.id)
       document.body.style.cursor = "pointer"
@@ -435,7 +493,7 @@ function NodeMark({
       </mesh>
       {node.kind === "field" && (
         <mesh ref={spin} geometry={geometries.shell} scale={radius * 1.8}>
-          <meshBasicMaterial color={color} wireframe transparent opacity={emphasis === "faded" ? 0.05 : 0.22} />
+          <meshBasicMaterial ref={shell} color={color} wireframe transparent opacity={emphasis === "faded" ? 0.05 : 0.22} />
         </mesh>
       )}
       <sprite scale={radius * 7}>
@@ -521,11 +579,13 @@ function Edges({
   positions,
   emphasis,
   color,
+  reveal,
 }: {
   topology: Topology
   positions: THREE.Vector3[]
   emphasis: Emphasis[]
   color: THREE.Color
+  reveal: RefObject<Reveal>
 }) {
   const count = topology.ends.length
   const geometry = useMemo(() => {
@@ -550,14 +610,16 @@ function Edges({
     topology.ends.forEach(([a, b], i) => {
       if (!positions[a] || !positions[b]) return
       opacity.current[i] = THREE.MathUtils.lerp(opacity.current[i] ?? 0, edgeOpacity[emphasis[i] ?? "rest"], step)
+      const entrance = Math.min(revealOpacity(topology.nodes[a].kind, reveal.current), revealOpacity(topology.nodes[b].kind, reveal.current))
+      const alpha = opacity.current[i] * entrance
       for (let s = 0; s < SEGMENTS; s++) {
         curvePoint(positions[a], positions[b], s / SEGMENTS, from)
         curvePoint(positions[a], positions[b], (s + 1) / SEGMENTS, to)
         const v = (i * SEGMENTS + s) * 2
         position.setXYZ(v, from.x, from.y, from.z)
         position.setXYZ(v + 1, to.x, to.y, to.z)
-        tint.setXYZW(v, color.r, color.g, color.b, opacity.current[i])
-        tint.setXYZW(v + 1, color.r, color.g, color.b, opacity.current[i])
+        tint.setXYZW(v, color.r, color.g, color.b, alpha)
+        tint.setXYZW(v + 1, color.r, color.g, color.b, alpha)
       }
     })
     position.needsUpdate = true
@@ -582,6 +644,7 @@ function Pulses({
   highlight,
   colorOf,
   reducedMotion,
+  reveal,
 }: {
   topology: Topology
   positions: THREE.Vector3[]
@@ -589,6 +652,7 @@ function Pulses({
   highlight: ReadonlySet<string> | null
   colorOf: (i: number) => THREE.Color
   reducedMotion: boolean
+  reveal: RefObject<Reveal>
 }) {
   const geometry = useMemo(() => {
     const geometry = new THREE.BufferGeometry()
@@ -616,6 +680,8 @@ function Pulses({
   }, [active, reducedMotion, topology])
 
   useFrame((_, delta) => {
+    geometry.setDrawRange(0, reveal.current.complete ? PULSES : 0)
+    if (!reveal.current.complete) return
     const position = geometry.getAttribute("position") as THREE.BufferAttribute
     const tint = geometry.getAttribute("color") as THREE.BufferAttribute
 
