@@ -7,10 +7,11 @@ import * as THREE from "three"
 import { cn } from "@/lib/utils"
 import { layoutFor, neighborsOf, RADIUS, type SkillGraph, type SkillNode, type Vec3 } from "@/lib/skill-graph"
 
-export type GraphColors = { fields: THREE.Color[]; edge: THREE.Color }
+export type GraphColors = { fields: string[]; edge: string }
 
 export type SceneProps = {
   graph: SkillGraph
+  layout?: [string, Vec3][]
   focus: string | null
   hover: string | null
   // Nodes to pick out (a field's members, or search matches); null when nothing is picked out.
@@ -140,6 +141,10 @@ export default function SkillGraphScene(props: SceneProps) {
   const topology = useMemo(() => topologyOf(graph), [graph])
   const emphasis = useMemo(() => emphasisFor(graph, { focus, hover, highlight }), [graph, focus, hover, highlight])
   const labels = useRef<(HTMLButtonElement | null)[]>([])
+  const colors = useMemo(
+    () => ({ fields: props.colors.fields.map((color) => new THREE.Color(color)), edge: new THREE.Color(props.colors.edge) }),
+    [props.colors]
+  )
 
   // Four quick clicks on the same node pop the graph: its neighbours fly apart and snap back into place.
   const clicks = useRef({ id: "", count: 0, at: 0 })
@@ -164,7 +169,7 @@ export default function SkillGraphScene(props: SceneProps) {
         onPointerMissed={props.onClear}
         className="touch-pan-y"
       >
-        <Graph {...props} onSelect={select} popped={popped} topology={topology} emphasis={emphasis} labels={labels} />
+        <Graph {...props} colors={colors} onSelect={select} popped={popped} topology={topology} emphasis={emphasis} labels={labels} />
       </Canvas>
       {/* Labels are plain DOM over the canvas, placed each frame, so they use the page's type and tokens. */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -197,15 +202,37 @@ export default function SkillGraphScene(props: SceneProps) {
   )
 }
 
-type GraphProps = SceneProps & {
+type NodeGeometries = {
+  sphere: THREE.SphereGeometry
+  target: THREE.SphereGeometry
+  shell: THREE.IcosahedronGeometry
+}
+
+type GraphProps = Omit<SceneProps, "colors"> & {
+  colors: { fields: THREE.Color[]; edge: THREE.Color }
   topology: Topology
   emphasis: ReturnType<typeof emphasisFor>
   labels: RefObject<(HTMLButtonElement | null)[]>
   popped: RefObject<string | null>
 }
 
-function Graph({ graph, focus, hover, highlight, colors, reducedMotion, onSelect, onHover, topology, emphasis, labels, popped }: GraphProps) {
-  const target = layoutFor(graph)
+function Graph({ graph, layout, focus, hover, highlight, colors, reducedMotion, onSelect, onHover, topology, emphasis, labels, popped }: GraphProps) {
+  const target = useMemo(() => (layout ? new Map(layout) : layoutFor(graph)), [graph, layout])
+  // Unit geometry is uploaded once per shape, rather than once for every node and hit target.
+  const geometries = useMemo<NodeGeometries>(
+    () => ({
+      sphere: new THREE.SphereGeometry(1, 24, 24),
+      target: new THREE.SphereGeometry(1, 8, 8),
+      shell: new THREE.IcosahedronGeometry(1, 1),
+    }),
+    []
+  )
+  useEffect(
+    () => () => {
+      for (const geometry of Object.values(geometries)) geometry.dispose()
+    },
+    [geometries]
+  )
   // Where each node is drawn this frame. Positions outlive a change to the graph, so nodes travel from
   // wherever they were to where they now belong, and a new node starts where it will settle.
   const drawn = useRef(new Map<string, THREE.Vector3>())
@@ -218,7 +245,7 @@ function Graph({ graph, focus, hover, highlight, colors, reducedMotion, onSelect
         drawn.current.set(node.id, fresh)
         return fresh
       }),
-    [topology]
+    [topology, target]
   )
   const colorOf = (i: number) => {
     const node = topology.nodes[i]
@@ -276,6 +303,7 @@ function Graph({ graph, focus, hover, highlight, colors, reducedMotion, onSelect
           node={node}
           position={positions[i]}
           radius={topology.radius[i]}
+          geometries={geometries}
           color={colorOf(i)}
           emphasis={emphasis.node[i]}
           onSelect={onSelect}
@@ -344,6 +372,7 @@ function NodeMark({
   node,
   position,
   radius,
+  geometries,
   color,
   emphasis,
   onSelect,
@@ -354,6 +383,7 @@ function NodeMark({
   node: SkillNode
   position: THREE.Vector3
   radius: number
+  geometries: NodeGeometries
   color: THREE.Color
   emphasis: Emphasis
   onSelect: (id: string) => void
@@ -400,13 +430,11 @@ function NodeMark({
   return (
     <group ref={group}>
       {/* Skills and areas are spheres, fields a sphere in a wireframe shell. */}
-      <mesh>
-        <sphereGeometry args={[radius, 24, 24]} />
+      <mesh geometry={geometries.sphere} scale={radius}>
         <meshBasicMaterial ref={core} color={color} transparent opacity={0.85} />
       </mesh>
       {node.kind === "field" && (
-        <mesh ref={spin}>
-          <icosahedronGeometry args={[radius * 1.8, 1]} />
+        <mesh ref={spin} geometry={geometries.shell} scale={radius * 1.8}>
           <meshBasicMaterial color={color} wireframe transparent opacity={emphasis === "faded" ? 0.05 : 0.22} />
         </mesh>
       )}
@@ -414,8 +442,7 @@ function NodeMark({
         <spriteMaterial ref={halo} map={glow()} color={color} transparent opacity={0.3} depthWrite={false} />
       </sprite>
       {/* A larger, invisible target: the dots alone are too small to hit. */}
-      <mesh {...handlers}>
-        <sphereGeometry args={[Math.max(radius * 2.4, 0.45), 8, 8]} />
+      <mesh {...handlers} geometry={geometries.target} scale={Math.max(radius * 2.4, 0.45)}>
         <meshBasicMaterial transparent opacity={0} depthWrite={false} colorWrite={false} />
       </mesh>
     </group>

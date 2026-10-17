@@ -180,14 +180,14 @@ function Media({
         muted
         loop
         playsInline
-        preload="metadata"
+        preload="none"
         className={fill}
       />
     )
 
   const still = media.motion ?? media.hero
   // eslint-disable-next-line @next/next/no-img-element
-  if (still) return <img src={still} alt="" draggable={false} className={fill} />
+  if (still) return <img src={still} alt="" loading="lazy" decoding="async" draggable={false} className={fill} />
 
   // No capture yet: a typographic cover that still looks deliberate.
   return (

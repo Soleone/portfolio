@@ -4,7 +4,6 @@ import { useReducedMotion } from "motion/react"
 import dynamic from "next/dynamic"
 import { ArrowLeft, ArrowUpRight, Search, X } from "lucide-react"
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react"
-import { Color } from "three"
 import { useTheme } from "@/components/soleone/theme"
 import {
   Breadcrumb,
@@ -19,11 +18,11 @@ import { Command, CommandEmpty, CommandItem, CommandList } from "@/components/ui
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
 import { Kbd } from "@/components/ui/kbd"
 import { projects } from "@/lib/portfolio"
-import { buildGraph, neighborsOf, searchGraph, slug, type OutlineRow, type SkillGraph as Graph, type SkillNode } from "@/lib/skill-graph"
+import { buildGraph, neighborsOf, searchGraph, slug, type OutlineRow, type SkillGraph as Graph, type SkillNode, type Vec3 } from "@/lib/skill-graph"
 import { cn } from "@/lib/utils"
 import type { GraphColors } from "./skill-graph-scene"
 
-// three.js is heavy, so the scene loads once the section comes near the viewport, and never on the server.
+// Keep all three.js code behind this boundary, including color conversion.
 const Scene = dynamic(() => import("./skill-graph-scene"), { ssr: false })
 
 // Each field takes one of the theme's eight tints; everything in it shares the color.
@@ -53,7 +52,7 @@ function useGraphColors(fieldCount: number): GraphColors | undefined {
       context.fillStyle = getComputedStyle(probe).color
       context.fillRect(0, 0, 1, 1)
       const [r, g, b] = context.getImageData(0, 0, 1, 1).data
-      return new Color(`rgb(${r}, ${g}, ${b})`)
+      return `rgb(${r}, ${g}, ${b})`
     }
     setColors({
       fields: Array.from({ length: fieldCount }, (_, field) => read(fieldToken(field))),
@@ -77,7 +76,20 @@ function useNearViewport<T extends HTMLElement>() {
       { rootMargin: "200px" }
     )
     observer.observe(ref.current)
-    return () => observer.disconnect()
+    // Warm the graphics code ahead of a scroll without starting a WebGL renderer off screen.
+    const preload = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return
+        void import("./skill-graph-scene")
+        preload.disconnect()
+      },
+      { rootMargin: "1000px" }
+    )
+    preload.observe(ref.current)
+    return () => {
+      observer.disconnect()
+      preload.disconnect()
+    }
   }, [])
 
   return [ref, near] as const
@@ -93,12 +105,15 @@ const hasWebGL = () => {
 
 export function SkillGraph({
   outline,
+  layout,
   stacked = false,
   selected,
   onFocusChange,
   search,
 }: {
   outline: OutlineRow[]
+  // The public page settles its layout at build time; the live outliner still computes its own.
+  layout?: [string, Vec3][]
   // One column, panel under the stage, for narrow hosts like the outliner's preview.
   stacked?: boolean
   // Lets a host (the outliner) point the graph at a node, and hear where the visitor walks.
@@ -202,6 +217,7 @@ export function SkillGraph({
             {near.ever && webgl && colors ? (
               <Scene
                 graph={graph}
+                layout={layout}
                 paused={!near.now}
                 focus={focus}
                 hover={hover}
