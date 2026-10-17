@@ -194,6 +194,8 @@ export default function SkillGraphScene(props: SceneProps) {
       className="relative size-full"
       onPointerDownCapture={() => {
         reveal.current.complete = true
+        props.onHover(null)
+        document.body.style.cursor = ""
       }}
     >
       <Canvas
@@ -218,7 +220,12 @@ export default function SkillGraphScene(props: SceneProps) {
             type="button"
             tabIndex={-1}
             onClick={() => select(node.id)}
-            onPointerEnter={() => props.onHover(node.id)}
+            onPointerEnter={(event) => {
+              if (event.buttons === 0) props.onHover(node.id)
+            }}
+            onPointerMove={(event) => {
+              if (event.buttons === 0) props.onHover(node.id)
+            }}
             onPointerLeave={() => props.onHover(null)}
             className={cn(
               "pointer-events-auto absolute top-0 left-0 cursor-pointer whitespace-nowrap rounded px-1 text-xs leading-tight transition-colors duration-300 select-none will-change-transform",
@@ -467,18 +474,22 @@ function NodeMark({
     if (spin.current) spin.current.rotation.y += delta * 0.4
   })
 
+  const hoverNode = (event: { buttons: number; stopPropagation: () => void }) => {
+    if (event.buttons !== 0 || revealOpacity(node.kind, reveal.current) < 0.3) return
+    event.stopPropagation()
+    onHover(node.id)
+    document.body.style.cursor = "pointer"
+  }
+
   const handlers = {
     onClick: (event: { stopPropagation: () => void }) => {
       if (revealOpacity(node.kind, reveal.current) < 0.3) return
       event.stopPropagation()
       onSelect(node.id)
     },
-    onPointerOver: (event: { stopPropagation: () => void }) => {
-      if (revealOpacity(node.kind, reveal.current) < 0.3) return
-      event.stopPropagation()
-      onHover(node.id)
-      document.body.style.cursor = "pointer"
-    },
+    onPointerOver: hoverNode,
+    // A node crossed during a drag is already "over"; movement after release must restore its hover.
+    onPointerMove: hoverNode,
     onPointerOut: () => {
       onHover(null)
       document.body.style.cursor = ""
