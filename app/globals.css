@@ -5,6 +5,7 @@
 @import "../components/soleone/theme/theme.css";
 @import "../components/soleone/material/material.css";
 @import "../components/soleone/letter/letter.css";
+@import "../components/portfolio/hero.css";
 
 @custom-variant dark (&:is(.dark *));
 

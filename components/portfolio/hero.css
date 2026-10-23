@@ -1,0 +1,6 @@
+/* The headline's gilt: a copy of it painted in the primary color around the pointer, laid over the original. */
+@utility hero-sheen {
+  background-image: radial-gradient(circle 12rem at var(--pointer-x, 50%) var(--pointer-y, 50%), var(--primary), transparent);
+  background-clip: text;
+  color: transparent;
+}
