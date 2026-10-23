@@ -973,15 +973,53 @@
     },
     {
       "id": "local:tries/2026-05-23-pool-remote",
-      "priority": null,
+      "priority": "low",
       "title": "Pool Remote",
-      "pitch": "Small diagnostic/control wrapper for the legacy Hayward AquaConnect web backend.",
+      "pitch": "Named color presets for AquaConnect pool lights, without the cloud login or manual off/on sequences.",
+      "description": "Replaces the legacy two-line remote with lighting presets and direct local-gateway control. Try the same web interface with simulated hardware; no real pool is affected.",
+      "live": "https://pool-remote.soleone.xyz",
       "kind": "web-app",
+      "stage": "prototype",
       "year": 2026,
-      "tier": "D",
-      "target": null,
+      "tech": [
+        "Next.js",
+        "React",
+        "TypeScript",
+        "Expo",
+        "Python"
+      ],
+      "demo": {
+        "strategy": "hosted",
+        "local": "npm ci && npm run demo",
+        "externals": [
+          {
+            "name": "AquaConnect gateway and ColorLogic pool lights",
+            "type": "hardware",
+            "seam": "createPoolClient: simulator by default; POOL_REMOTE_MODE=local plus AQUACONNECT_LOCAL_URL enables local hardware outside Vercel",
+            "standIn": "simulated",
+            "note": "Temperatures and lighting are simulated per browser. Hardware timing is accelerated, and no real pool is controlled."
+          }
+        ]
+      },
+      "media": {
+        "hero": "media/tries-2026-05-23-pool-remote/hero.png",
+        "motion": "media/tries-2026-05-23-pool-remote/motion.webp",
+        "screenshots": [
+          "media/tries-2026-05-23-pool-remote/screenshot-1.png"
+        ],
+        "capture": "npm run media:capture"
+      },
+      "brand": {
+        "icon": "brand/tries-2026-05-23-pool-remote/icon.png",
+        "colors": [
+          "#73c6ff",
+          "#07111f"
+        ]
+      },
+      "tier": "S",
+      "target": "C",
       "gap": [],
-      "source": "draft"
+      "source": "showcase.json"
     },
     {
       "id": "local:skills/prune",
