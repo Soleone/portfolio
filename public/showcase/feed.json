@@ -786,7 +786,7 @@
       "id": "local:products/tasks",
       "priority": null,
       "title": "Tasks",
-      "pitch": "A local-first, keyboard-first task app for people and their existing agents.",
+      "pitch": "A local-first, keyboard-first task list for one person and their agents.",
       "kind": "desktop-app",
       "year": 2026,
       "repo": "https://github.com/Soleone/tasks",
@@ -966,6 +966,7 @@
       "pitch": "A Claude Code mod that draws one status line on the hint row under the prompt: where you are, what the session has spent, how full the context is, and the 5-...",
       "kind": "other",
       "year": 2026,
+      "repo": "https://github.com/Soleone/claude-statusbar",
       "tier": "C",
       "target": null,
       "gap": [],
@@ -1162,6 +1163,54 @@
       },
       "tier": "S",
       "target": "A",
+      "gap": [],
+      "source": "showcase.json"
+    },
+    {
+      "id": "local:js/gaming",
+      "priority": "high",
+      "title": "Soleone Gaming",
+      "pitch": "A personal release calendar for the games I'm watching: how hyped I am before launch, and a short scored review once I've played them.",
+      "description": "Cover-led cards by month that keep uncertain dates honest, reviews with spoiler tags and their own URLs, and a local editor with a Pi research agent that sources dates and cover art.",
+      "kind": "web-app",
+      "stage": "prototype",
+      "year": 2026,
+      "tech": [
+        "React",
+        "TypeScript",
+        "Vite+",
+        "shadcn/ui",
+        "Tailwind CSS",
+        "Pi"
+      ],
+      "repo": "https://github.com/Soleone/gaming",
+      "live": "https://gaming.soleone.xyz",
+      "demo": {
+        "strategy": "hosted",
+        "local": "vp run dev",
+        "externals": [
+          {
+            "name": "Research agent",
+            "type": "model",
+            "seam": "dev/agent (development server only)",
+            "standIn": "omitted",
+            "note": "The hosted calendar is read-only: the editor and the Pi research agent only run on a local dev server."
+          }
+        ]
+      },
+      "media": {
+        "hero": "media/js-gaming/hero.png",
+        "motion": "media/js-gaming/motion.webp",
+        "capture": "vp run media:capture"
+      },
+      "brand": {
+        "icon": "brand/js-gaming/icon.svg",
+        "colors": [
+          "#f5b82e"
+        ]
+      },
+      "tier": "S",
+      "target": "S",
       "gap": [],
       "source": "showcase.json"
     }
