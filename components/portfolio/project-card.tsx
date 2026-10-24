@@ -53,7 +53,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
             </div>
           </FlipCardLayer>
 
-          {/* Fixed-height slots keep every card the same size whatever the copy: one-line title, three-line pitch. */}
+          {/* Fixed-height slots keep every card the same size whatever the copy: one-line title, four-line pitch. */}
           <FlipCardLayer depth={0.55} className="px-5 pt-2 pb-4">
             <div className="flex items-center gap-2 text-2xs font-medium tracking-wider text-muted-foreground uppercase">
               <span>{project.type}</span>
@@ -74,7 +74,7 @@ export function ProjectCard({ project, index }: { project: CardProject; index: n
               )}
               <h3 className="truncate text-xl font-semibold tracking-tight">{project.title}</h3>
             </div>
-            <p className="mt-1.5 line-clamp-3 h-[4.875em] text-sm leading-relaxed text-pretty text-muted-foreground">
+            <p className="mt-1.5 md:line-clamp-4 md:h-[6.5em] text-sm leading-relaxed text-pretty text-muted-foreground">
               {project.pitch}
             </p>
           </FlipCardLayer>

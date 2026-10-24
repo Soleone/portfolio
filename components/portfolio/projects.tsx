@@ -87,7 +87,7 @@ export function Projects() {
     <section id="work" className="mx-auto max-w-6xl px-6 py-16 md:py-24">
       <SectionHeading label="Selected work" title="Projects" />
 
-      <div className="mt-12 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-12 grid gap-x-8 gap-y-12 md:grid-cols-2 xl:grid-cols-3">
         {cardProjects.map((project, index) => (
           <ProjectCard key={project.title} project={project} index={index} />
         ))}
