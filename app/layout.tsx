@@ -43,8 +43,11 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
+      // Lets Next.js turn the smooth scrolling off while it changes pages, so new pages start at the top at once.
+      data-scroll-behavior="smooth"
       data-theme={DEFAULT_THEME}
-      className={cn("font-sans", inter.variable, defaultThemeIsDark && "dark")}
+      // In-page links (header nav, hero buttons) glide to their section instead of jumping.
+      className={cn("font-sans motion-safe:scroll-smooth", inter.variable, defaultThemeIsDark && "dark")}
     >
       <head>
         {/* The site ships its own themes. This keeps Dark Reader from restyling them, which would
