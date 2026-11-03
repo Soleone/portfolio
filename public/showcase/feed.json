@@ -709,16 +709,49 @@
     },
     {
       "id": "local:js/citizenship",
-      "priority": null,
-      "title": "Civic Relay",
+      "priority": "mid",
+      "title": "Citizenship",
       "pitch": "A local-first, two-person study desk for the Canadian citizenship test.",
+      "description": "Turns Discover Canada into 60-odd short sessions with quick checks, chapter tests and a timed mock exam, schedules misses for spaced review, and checks every question against a verbatim quote from the guide.",
       "kind": "web-app",
+      "stage": "product",
       "year": 2026,
+      "tech": [
+        "TypeScript",
+        "React",
+        "Vite",
+        "Cloudflare Workers"
+      ],
       "repo": "https://github.com/Soleone/citizenship",
-      "tier": "C",
-      "target": null,
+      "live": "https://citizenship.soleone.xyz",
+      "demo": {
+        "strategy": "hosted",
+        "local": "pnpm dev",
+        "externals": [
+          {
+            "name": "Household sync",
+            "type": "service",
+            "seam": "the household key a device joins with through #join=<key>; without one, useHouseholdSync in src/sync.ts never calls the Worker",
+            "standIn": "omitted",
+            "note": "Progress stays in your browser. Sharing it between devices needs your own household Worker."
+          }
+        ]
+      },
+      "media": {
+        "hero": "media/js-citizenship/hero.png",
+        "motion": "media/js-citizenship/motion.webp",
+        "capture": "pnpm build && pnpm media:capture"
+      },
+      "brand": {
+        "icon": "brand/js-citizenship/icon.svg",
+        "colors": [
+          "#d52b1e"
+        ]
+      },
+      "tier": "S",
+      "target": "A",
       "gap": [],
-      "source": "draft"
+      "source": "showcase.json"
     },
     {
       "id": "local:pi/pi-brand",
