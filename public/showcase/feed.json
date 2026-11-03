@@ -1,6 +1,54 @@
 {
   "projects": [
     {
+      "id": "local:products/tasks",
+      "priority": "high",
+      "title": "Tasks",
+      "pitch": "A keyboard-first task list whose tasks are plain JSON files, so you, your scripts and your coding agents can all work on them.",
+      "description": "One TypeScript backend runs the desktop, Android and web apps and a CLI that agents drive over JSON lines. Undo, history and safe retries are built in, and Syncthing keeps devices in step.",
+      "kind": "desktop-app",
+      "stage": "product",
+      "year": 2026,
+      "tech": [
+        "TypeScript",
+        "React",
+        "Tauri",
+        "Node.js",
+        "SQLite"
+      ],
+      "repo": "https://github.com/Soleone/tasks",
+      "live": "https://tasks.soleone.xyz",
+      "demo": {
+        "strategy": "hosted",
+        "local": "pnpm dev:web",
+        "externals": [
+          {
+            "name": "Syncthing",
+            "type": "app",
+            "seam": "the home's sync folder",
+            "standIn": "omitted",
+            "note": "The web version keeps your tasks in this browser only; the desktop and Android apps keep them as files you can sync."
+          }
+        ]
+      },
+      "media": {
+        "hero": "media/products-tasks/hero.png",
+        "motion": "media/products-tasks/motion.webp",
+        "capture": "node scripts/capture-demo.mjs"
+      },
+      "brand": {
+        "icon": "brand/products-tasks/icon.svg",
+        "colors": [
+          "#d4af37",
+          "#090a0c"
+        ]
+      },
+      "tier": "S",
+      "target": "S",
+      "gap": [],
+      "source": "showcase.json"
+    },
+    {
       "id": "local:products/vibestep",
       "priority": "high",
       "title": "Vibestep",
@@ -814,19 +862,6 @@
       "target": null,
       "gap": [],
       "source": null
-    },
-    {
-      "id": "local:products/tasks",
-      "priority": null,
-      "title": "Tasks",
-      "pitch": "A local-first, keyboard-first task list for one person and their agents.",
-      "kind": "desktop-app",
-      "year": 2026,
-      "repo": "https://github.com/Soleone/tasks",
-      "tier": "C",
-      "target": null,
-      "gap": [],
-      "source": "draft"
     },
     {
       "id": "local:pi/pi-sketchpad",
