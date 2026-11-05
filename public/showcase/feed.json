@@ -353,9 +353,11 @@
         "motion": "media/pi-pi-git/motion.webp",
         "capture": "npm run media:capture"
       },
-      "tier": "S",
+      "tier": "C",
       "target": "A",
-      "gap": [],
+      "gap": [
+        "readme.order"
+      ],
       "source": "showcase.json"
     },
     {
@@ -413,9 +415,11 @@
         "motion": "media/products-youtube-playlist-downloader/motion.webp",
         "capture": "npm run media:capture"
       },
-      "tier": "S",
+      "tier": "A",
       "target": "S",
-      "gap": [],
+      "gap": [
+        "readme.published"
+      ],
       "source": "showcase.json"
     },
     {
@@ -445,9 +449,11 @@
         "motion": "media/js-gigquest/motion.webp",
         "capture": "npm run media:capture"
       },
-      "tier": "S",
+      "tier": "C",
       "target": "A",
-      "gap": [],
+      "gap": [
+        "readme.order"
+      ],
       "source": "showcase.json"
     },
     {
@@ -503,9 +509,11 @@
       "brand": {
         "logo": "brand/remix-topdeck/logo.png"
       },
-      "tier": "S",
+      "tier": "C",
       "target": "A",
-      "gap": [],
+      "gap": [
+        "readme.order"
+      ],
       "source": "showcase.json"
     },
     {
@@ -548,7 +556,7 @@
         "motion": "media/pi-pi-statusline/motion.webp",
         "capture": "pnpm media:capture"
       },
-      "tier": "S",
+      "tier": "C",
       "target": "C",
       "gap": [],
       "source": "showcase.json"
@@ -586,9 +594,11 @@
         "motion": "media/products-staffed/motion.webp",
         "capture": "pnpm media:capture"
       },
-      "tier": "S",
+      "tier": "A",
       "target": "S",
-      "gap": [],
+      "gap": [
+        "readme.motion"
+      ],
       "source": "showcase.json"
     },
     {
@@ -699,7 +709,7 @@
         "motion": "media/pi-pi-topic/motion.webp",
         "capture": "npm run media:capture"
       },
-      "tier": "S",
+      "tier": "C",
       "target": "C",
       "gap": [],
       "source": "showcase.json"
@@ -725,7 +735,7 @@
       "media": {
         "hero": "https://github.com/user-attachments/assets/646effc0-1c24-413d-bef3-3d85591cd89b"
       },
-      "tier": "B",
+      "tier": "C",
       "target": null,
       "gap": [],
       "source": "draft"
@@ -848,7 +858,7 @@
         "motion": "media/pi-pi-brand/motion.webp",
         "capture": "npm run media:capture"
       },
-      "tier": "S",
+      "tier": "A",
       "target": "A",
       "gap": [],
       "source": "showcase.json"
@@ -1002,9 +1012,11 @@
         "motion": "media/soleone-keyreps/motion.webp",
         "capture": "npm run media:capture"
       },
-      "tier": "S",
+      "tier": "C",
       "target": "A",
-      "gap": [],
+      "gap": [
+        "readme.order"
+      ],
       "source": "showcase.json"
     },
     {
@@ -1085,7 +1097,7 @@
           "#07111f"
         ]
       },
-      "tier": "S",
+      "tier": "A",
       "target": "C",
       "gap": [],
       "source": "showcase.json"
@@ -1198,9 +1210,11 @@
           "#0D0F12"
         ]
       },
-      "tier": "S",
+      "tier": "A",
       "target": "S",
-      "gap": [],
+      "gap": [
+        "readme.motion"
+      ],
       "source": "showcase.json"
     },
     {
@@ -1229,9 +1243,11 @@
         "motion": "media/js-pixelpics/motion.webp",
         "capture": "npm run media:capture -- --url http://localhost:4173"
       },
-      "tier": "S",
+      "tier": "C",
       "target": "A",
-      "gap": [],
+      "gap": [
+        "readme.order"
+      ],
       "source": "showcase.json"
     },
     {
@@ -1337,6 +1353,64 @@
         "colors": [
           "#1b1c1f"
         ]
+      },
+      "tier": "C",
+      "target": "S",
+      "gap": [
+        "readme.order"
+      ],
+      "source": "showcase.json"
+    },
+    {
+      "id": "local:products/pluck",
+      "priority": "high",
+      "title": "pluck",
+      "pitch": "Select text in any app, press a hotkey, and send it to your own scripts or an AI agent from a small menu at the cursor.",
+      "description": "Actions are entries in one TOML file: a command that reads the text on stdin, or a prompt for an agent. Output streams into a panel, lands on the clipboard or replaces the selection. Agent sessions run on Pi.",
+      "kind": "desktop-app",
+      "stage": "product",
+      "year": 2026,
+      "tech": [
+        "Rust",
+        "Tauri",
+        "TypeScript",
+        "React"
+      ],
+      "repo": "https://github.com/Soleone/pluck",
+      "live": "https://pluck.soleone.xyz",
+      "demo": {
+        "strategy": "hosted",
+        "local": "pnpm dev:web",
+        "externals": [
+          {
+            "name": "Selected text in other apps",
+            "type": "app",
+            "seam": "the bridge in src/bridge.ts",
+            "standIn": "simulated",
+            "note": "The browser demo opens the menu on a sample quote instead of text you selected elsewhere."
+          },
+          {
+            "name": "Your action scripts",
+            "type": "app",
+            "seam": "the bridge in src/bridge.ts",
+            "standIn": "canned",
+            "note": "Scripts don't run in the browser; their output is canned."
+          },
+          {
+            "name": "Pi agent sessions",
+            "type": "model",
+            "seam": "the bridge in src/bridge.ts",
+            "standIn": "canned",
+            "note": "Agent replies are canned; nothing is sent to a model."
+          }
+        ]
+      },
+      "media": {
+        "motion": "media/products-pluck/motion.webp",
+        "capture": "pnpm media:capture"
+      },
+      "brand": {
+        "icon": "brand/products-pluck/icon.svg"
       },
       "tier": "S",
       "target": "S",
