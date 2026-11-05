@@ -413,11 +413,9 @@
         "motion": "media/products-youtube-playlist-downloader/motion.webp",
         "capture": "npm run media:capture"
       },
-      "tier": "A",
+      "tier": "S",
       "target": "S",
-      "gap": [
-        "readme.published"
-      ],
+      "gap": [],
       "source": "showcase.json"
     },
     {
@@ -852,7 +850,7 @@
         "motion": "media/pi-pi-brand/motion.webp",
         "capture": "npm run media:capture"
       },
-      "tier": "A",
+      "tier": "S",
       "target": "A",
       "gap": [],
       "source": "showcase.json"
