@@ -353,11 +353,9 @@
         "motion": "media/pi-pi-git/motion.webp",
         "capture": "npm run media:capture"
       },
-      "tier": "C",
+      "tier": "S",
       "target": "A",
-      "gap": [
-        "readme.order"
-      ],
+      "gap": [],
       "source": "showcase.json"
     },
     {
@@ -449,11 +447,9 @@
         "motion": "media/js-gigquest/motion.webp",
         "capture": "npm run media:capture"
       },
-      "tier": "C",
+      "tier": "S",
       "target": "A",
-      "gap": [
-        "readme.order"
-      ],
+      "gap": [],
       "source": "showcase.json"
     },
     {
@@ -509,11 +505,9 @@
       "brand": {
         "logo": "brand/remix-topdeck/logo.png"
       },
-      "tier": "C",
+      "tier": "S",
       "target": "A",
-      "gap": [
-        "readme.order"
-      ],
+      "gap": [],
       "source": "showcase.json"
     },
     {
@@ -556,7 +550,7 @@
         "motion": "media/pi-pi-statusline/motion.webp",
         "capture": "pnpm media:capture"
       },
-      "tier": "C",
+      "tier": "S",
       "target": "C",
       "gap": [],
       "source": "showcase.json"
@@ -709,7 +703,7 @@
         "motion": "media/pi-pi-topic/motion.webp",
         "capture": "npm run media:capture"
       },
-      "tier": "C",
+      "tier": "S",
       "target": "C",
       "gap": [],
       "source": "showcase.json"
@@ -1012,11 +1006,9 @@
         "motion": "media/soleone-keyreps/motion.webp",
         "capture": "npm run media:capture"
       },
-      "tier": "C",
+      "tier": "S",
       "target": "A",
-      "gap": [
-        "readme.order"
-      ],
+      "gap": [],
       "source": "showcase.json"
     },
     {
@@ -1243,11 +1235,9 @@
         "motion": "media/js-pixelpics/motion.webp",
         "capture": "npm run media:capture -- --url http://localhost:4173"
       },
-      "tier": "C",
+      "tier": "S",
       "target": "A",
-      "gap": [
-        "readme.order"
-      ],
+      "gap": [],
       "source": "showcase.json"
     },
     {
@@ -1354,11 +1344,9 @@
           "#1b1c1f"
         ]
       },
-      "tier": "C",
+      "tier": "S",
       "target": "S",
-      "gap": [
-        "readme.order"
-      ],
+      "gap": [],
       "source": "showcase.json"
     },
     {
