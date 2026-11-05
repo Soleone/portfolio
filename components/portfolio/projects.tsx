@@ -17,7 +17,7 @@ import { ProjectCard, type CardProject } from "./project-card"
 import { SectionHeading } from "./section-heading"
 
 // Only projects the showcase grades A or S are shown. They sort by priority, then tier (S before A), then the registry order (reordered with `showcase manage`), then year.
-const orderedProjects = withShowcase(projects)
+const sortedProjects = withShowcase(projects)
   .filter((project) => showcaseRank(project) < 2)
   .sort((a, b) => {
     const priority = priorityRank[a.priority] - priorityRank[b.priority]
@@ -34,6 +34,11 @@ const orderedProjects = withShowcase(projects)
 
     return Number(b.year) - Number(a.year)
   })
+
+// The pi- extensions read as one family, so they sit together where the highest ranked one lands.
+const isPi = (project: Project) => project.title.startsWith("pi-")
+const piProjects = sortedProjects.filter(isPi)
+const orderedProjects = sortedProjects.flatMap((project) => (!isPi(project) ? [project] : project === piProjects[0] ? piProjects : []))
 
 const projectIcons: Record<string, LucideIcon> = {
   "Pi Tasks": Wrench,
