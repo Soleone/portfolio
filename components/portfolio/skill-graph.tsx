@@ -27,7 +27,7 @@ const Scene = dynamic(() => import("./skill-graph-scene"), { ssr: false })
 
 // Each field takes one of the theme's eight tints; everything in it shares the color.
 export const fieldToken = (field: number) => `var(--tint-${(field % 8) + 1})`
-const tokenOf = (node: Pick<SkillNode, "fields">) => fieldToken(node.fields[0] ?? 0)
+const tokenOf = (node: Pick<SkillNode, "fields">) => fieldToken(node.fields[0])
 
 // A swatch in a field's tint. The tint arrives as a CSS variable, so it is handed over as one.
 export function Dot({ color, className }: { color: string; className?: string }) {
@@ -451,11 +451,11 @@ function FocusPanel({
   onClear: () => void
 }) {
   const sections = [
-    { title: "Inside", items: node.children.map((id) => graph.byId.get(id)!).filter(Boolean) },
+    { title: "Inside", items: node.children.map((id) => graph.byId.get(id)!) },
     // Where else it sits, beyond the path shown in the header.
     { title: "Also part of", items: node.paths.slice(1).map((path) => graph.byId.get(slug(path.at(-1) ?? ""))!).filter(Boolean) },
   ].filter((section) => section.items.length > 0)
-  const crumbs = node.paths[0] ?? []
+  const crumbs = node.paths[0]
 
   return (
     <>
