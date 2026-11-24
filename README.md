@@ -30,18 +30,17 @@ The header has a theme picker: the palette button (or `T`) opens a ring of previ
 in its own theme. Drag, scroll or use the arrows to browse, type to filter, and click the front card or
 press Enter to switch; the new theme spreads over the page from the card. Themes are palettes in the
 same omarchy `colors.toml` format as the tasks app, so a palette can be pasted in from there. The
-default is Gilt, and the choice is remembered in `localStorage` (`portfolio.theme`). Press `D` to flip
-between dark and light.
+default is Gilt, and the choice is remembered in `localStorage` (`portfolio.theme`).
 
-Everything theme-related lives in `components/theme/`, so it can move to another project as one
-folder. Its README lists the files and the setup.
+The theme kit comes from the soleone shadcn registry and is installed under `components/soleone/`;
+what is particular to this site lives in `components/theme/`. Its README lists the files and the setup.
 
-- `components/theme/builtin.ts` holds the palettes. Add a theme by pasting one in.
-- `components/theme/theme.css` maps the palette slots (`--om-*`) onto the shadcn tokens. Components
+- `components/soleone/theme/palettes.ts` holds the built-in palettes. Change them in the registry.
+- `components/soleone/theme/theme.css` maps the palette slots (`--om-*`) onto the shadcn tokens. Components
   only use the tokens, so keep colors out of components (project card tints come from `--tint-1..8`).
 - `showcase` is the original design (zinc and pink, follows the OS appearance), kept for comparison.
-  To retire it, delete `SHOWCASE_THEME` in `components/theme/builtin.ts`, `components/theme/showcase.css`
-  and its `@import` in `theme.css`.
+  To retire it, delete `SHOWCASE_THEME` in `components/theme/themes.ts`, `components/theme/showcase.css`
+  and its `@import` in `app/globals.css`.
 
 ## Contact form
 
